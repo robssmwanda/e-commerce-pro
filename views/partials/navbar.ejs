@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/style.css">
+  <title> <%= locals.title || 'Mon site' %></title>
+</head>
+<body>
+
+  <nav class="global-nav">
+    <div class="container">
+      <ul>
+        <li><a href="/" style="font-size: 18px;"></a></li>
+        <li><a href="#">Store</a></li>
+        <li><a href="#">Mac</a></li>
+        <li><a href="#">iPad</a></li>
+        <li><a href="/fr/iphone/">iPhone</a></li>
+        <li><a href="#">Watch</a></li>
+        <li><a href="#">Vision</a></li>
+        <li><a href="#">AirPods</a></li>
+        <li><a href="#">TV & Maison</a></li>
+        <li><a href="#">Divertissement</a></li>
+        <li><a href="#">Accessoire</a></li>
+        <li><a href="#">Assistance</a></li>
+
+        <!-- Search -->
+        <li>
+          <a href="#">
+            <i data-lucide="search" style="width: 16px; height: 16px;"></i>
+          </a>
+        </li>
+
+        <!-- Cart -->
+        <li class="cart-icon">
+          <a href="/cart-page">
+            <i data-lucide="shopping-bag" style="width: 16px; height: 16px;"></i>
+
+            <!-- 🔥 badge toujours présent mais caché si 0 -->
+            <span class="cart-count"
+              style="<%= cartCount > 0 ? 'display:inline-block' : 'display:none' %>">
+              <%= cartCount || 0 %>
+            </span>
+
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </nav>
+
+</body>
+</html>

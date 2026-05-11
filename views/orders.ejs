@@ -1,0 +1,52 @@
+<div class="orders-wrapper">
+  <h1 class="orders-title">Mes commandes</h1>
+
+  <% if (!orders || orders.length === 0) { %>
+    <div class="empty-orders">
+      <p>Aucune commande pour le moment 🛒</p>
+      <a href="/" class="btn-home">Commencer vos achats</a>
+    </div>
+  <% } else { %>
+
+    <div class="orders-list">
+      <% orders.forEach(order => { %>
+
+        <div class="order-card">
+          <div class="order-header">
+            <span class="order-date">
+              <%= new Date(order.createdAt).toLocaleDateString() %>
+            </span>
+
+            <span class="order-total">
+              <%= order.total %> $
+            </span>
+          </div>
+
+          <!-- 🔥 AJOUT STATUS ICI -->
+          <p class="order-status">
+            Statut :
+            <span class="status"><%= order.status %></span>
+          </p>
+
+          <div class="order-items">
+            <% order.items.slice(0, 3).forEach(item => { %>
+              <img src="<%= item.image %>" alt="<%= item.name %>">
+            <% }) %>
+
+            <% if (order.items.length > 3) { %>
+              <span class="more-items">+<%= order.items.length - 3 %></span>
+            <% } %>
+          </div>
+
+          <div class="order-footer">
+            <a href="/orders/<%= order._id %>" class="btn-detail">
+              Voir détail
+            </a>
+          </div>
+        </div>
+
+      <% }) %>
+    </div>
+
+  <% } %>
+</div>

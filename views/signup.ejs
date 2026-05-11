@@ -1,0 +1,260 @@
+<main class="signup-page">
+  <div class="signup-container">
+
+    <h1>Créer votre compte Apple</h1>
+
+    <p class="subtitle">
+      Un seul compte Apple suffit pour tous les services Apple.
+    </p>
+
+    <form method="POST" action="/signup">
+
+      <!-- ========================= -->
+      <!-- IDENTITÉ -->
+      <!-- ========================= -->
+
+      <div class="form-grid">
+
+        <input 
+          type="text"
+          name="firstname"
+          placeholder="Prénom"
+          value="<%= formData?.firstname || '' %>"
+          class="<%= errors?.firstname ? 'input-error' : '' %>"
+        >
+
+        <input 
+          type="text"
+          name="lastname"
+          placeholder="Nom"
+          value="<%= formData?.lastname || '' %>"
+          class="<%= errors?.lastname ? 'input-error' : '' %>"
+        >
+
+      </div>
+
+      <% if(errors?.firstname){ %>
+        <div class="error-message">
+          <%= errors.firstname %>
+        </div>
+      <% } %>
+
+      <% if(errors?.lastname){ %>
+        <div class="error-message">
+          <%= errors.lastname %>
+        </div>
+      <% } %>
+
+      <!-- ========================= -->
+      <!-- PAYS -->
+      <!-- ========================= -->
+
+      <div class="input-full">
+
+        <select 
+          name="country"
+          class="<%= errors?.country ? 'input-error' : '' %>"
+        >
+
+          <option value="">Choisissez votre pays</option>
+
+          <option value="France" <%= formData?.country === 'France' ? 'selected' : '' %>>
+            France
+          </option>
+
+          <option value="Belgique" <%= formData?.country === 'Belgique' ? 'selected' : '' %>>
+            Belgique
+          </option>
+
+          <option value="Suisse" <%= formData?.country === 'Suisse' ? 'selected' : '' %>>
+            Suisse
+          </option>
+
+          <option value="Canada" <%= formData?.country === 'Canada' ? 'selected' : '' %>>
+            Canada
+          </option>
+
+          <option value="Allemagne" <%= formData?.country === 'Allemagne' ? 'selected' : '' %>>
+            Allemagne
+          </option>
+
+          <option value="Italie" <%= formData?.country === 'Italie' ? 'selected' : '' %>>
+            Italie
+          </option>
+
+          <option value="Espagne" <%= formData?.country === 'Espagne' ? 'selected' : '' %>>
+            Espagne
+          </option>
+
+          <option value="Portugal" <%= formData?.country === 'Portugal' ? 'selected' : '' %>>
+            Portugal
+          </option>
+
+          <option value="République démocratique du Congo"
+            <%= formData?.country === 'République démocratique du Congo' ? 'selected' : '' %>>
+            République démocratique du Congo
+          </option>
+
+        </select>
+
+        <% if(errors?.country){ %>
+          <div class="error-message">
+            <%= errors.country %>
+          </div>
+        <% } %>
+
+      </div>
+
+      <!-- ========================= -->
+      <!-- DATE DE NAISSANCE -->
+      <!-- ========================= -->
+
+      <div class="form-grid">
+
+        <input 
+          type="number"
+          name="birthDay"
+          placeholder="Jour"
+          min="1"
+          max="31"
+          value="<%= formData?.birthDay || '' %>"
+          class="<%= errors?.dateOfBirth ? 'input-error' : '' %>"
+        >
+
+        <input 
+          type="number"
+          name="birthMonth"
+          placeholder="Mois"
+          min="1"
+          max="12"
+          value="<%= formData?.birthMonth || '' %>"
+          class="<%= errors?.dateOfBirth ? 'input-error' : '' %>"
+        >
+
+        <input 
+          type="number"
+          name="birthYear"
+          placeholder="Année"
+          min="1900"
+          max="2016"
+          value="<%= formData?.birthYear || '' %>"
+          class="<%= errors?.dateOfBirth ? 'input-error' : '' %>"
+        >
+
+      </div>
+
+      <% if(errors?.dateOfBirth){ %>
+        <div class="error-message birth-error">
+          <%= errors.dateOfBirth %>
+        </div>
+      <% } %>
+
+      <hr class="separator">
+
+      <!-- ========================= -->
+      <!-- EMAIL -->
+      <!-- ========================= -->
+
+      <div class="input-full">
+
+        <input 
+          type="email"
+          name="email"
+          placeholder="nom@example.com"
+          value="<%= formData?.email || '' %>"
+          class="<%= errors?.email ? 'input-error' : '' %>"
+        >
+
+        <% if(errors?.email){ %>
+          <div class="error-message">
+            <%= errors.email %>
+          </div>
+        <% } %>
+
+        <p class="helper-text">
+          Ceci sera votre nouvel identifiant Apple.
+        </p>
+
+      </div>
+
+      <!-- ========================= -->
+      <!-- PASSWORD -->
+      <!-- ========================= -->
+
+      <div class="input-full">
+
+        <input 
+          type="password"
+          name="password"
+          placeholder="Mot de passe"
+          class="<%= errors?.password ? 'input-error' : '' %>"
+        >
+
+        <% if(errors?.password){ %>
+          <div class="error-message">
+            <%= errors.password %>
+          </div>
+        <% } %>
+
+      </div>
+
+      <!-- ========================= -->
+      <!-- PASSWORD CONFIRM -->
+      <!-- ========================= -->
+
+      <div class="input-full">
+
+        <input 
+          type="password"
+          name="passwordConfirm"
+          placeholder="Confirmer mot de passe"
+          class="<%= errors?.passwordConfirm ? 'input-error' : '' %>"
+        >
+
+        <% if(errors?.passwordConfirm){ %>
+          <div class="error-message">
+            <%= errors.passwordConfirm %>
+          </div>
+        <% } %>
+
+      </div>
+
+      <hr class="separator">
+
+      <!-- ========================= -->
+      <!-- CONFIDENTIALITÉ -->
+      <!-- ========================= -->
+
+      <div class="privacy-box">
+        <p>
+          Vos données sont utilisées pour vous permettre de vous connecter
+          en toute sécurité. Apple gère vos informations conformément à sa
+          politique de confidentialité.
+
+          <a href="#" style="color:#0066cc;text-decoration:none;">
+            En savoir plus...
+          </a>
+        </p>
+      </div>
+
+      <!-- ========================= -->
+      <!-- BOUTON -->
+      <!-- ========================= -->
+
+      <div class="footer-actions">
+
+        <button type="submit" class="btn-continue">
+          Continuer
+        </button>
+
+      </div>
+
+      <p class="login-link">
+        Vous avez déjà un compte ?
+        <a href="/login">Se connecter</a>
+      </p>
+
+    </form>
+
+  </div>
+</main>

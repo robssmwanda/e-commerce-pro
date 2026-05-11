@@ -1,0 +1,113 @@
+/* Styles Généraux */
+body { margin: 0; font-family: "SF Pro Text", Helvetica, Arial, sans-serif; }
+.container { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+
+/* Barre de navigation Global (Noire/Translucide) */
+.global-nav {
+  height: 44px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px); /* Effet flou Apple */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.global-nav ul {
+  list-style: none;
+  display: flex;
+  width: 100%;
+  padding: 0;
+}
+
+.global-nav a {
+  color: #f5f5f7;
+  text-decoration: none;
+  font-size: 12px;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.global-nav a:hover { opacity: 1; }
+
+/* Sous-navigation Produits (Blanche) */
+.product-nav {
+  padding: 20px 0;
+  background: #fff;
+  border-bottom: 1px solid #d2d2d2;
+  text-align: center;
+}
+
+.product-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+}
+
+.product-item img {
+  height: 54px; /* Ajustez selon vos images */
+  margin-bottom: 8px;
+}
+
+.iphone-page {
+    padding-top: 44px; /* Hauteur de la navbar */
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 80px; /* Titre massif Apple */
+    font-weight: 600;
+    margin: 40px 0;
+}
+
+.sub-nav {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 50px;
+}
+
+.container-sub {
+    display: flex;
+    gap: 40px; /* Espace entre les icônes */
+}
+
+.sub-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #1d1d1f;
+    font-size: 11px;
+}
+
+.sub-item img {
+    height: 54px; /* Taille exacte des icônes */
+    margin-bottom: 10px;
+}
+
+.explore-section {
+    background-color: #f5f5f7; /* Gris très clair Apple */
+    padding: 60px 0;
+    text-align: left;
+}
+
+
+
+.product-grid {
+  display: flex;            /* Aligne les cartes sur une seule ligne */
+  gap: 22px;                /* Espace entre les cartes */
+  overflow-x: auto;         /* Active le défilement horizontal */
+  scroll-snap-type: x mandatory; /* Effet d'aimant sur les cartes */
+  padding-bottom: 30px;     /* Espace pour ne pas couper l'ombre ou le texte en bas */
+  scrollbar-width: none;    /* Cache la barre de défilement sur Firefox */
+}
+
+/* Cache la barre de défilement sur Chrome/Safari */
+.product-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.product-card {
+  flex: 0 0 400px;          /* Force chaque carte à faire exactement 400px de large */
+  scroll-snap-align: start; /* La carte s'aimante au bord gauche lors du scroll */
+}

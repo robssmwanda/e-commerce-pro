@@ -1,0 +1,46 @@
+<div style="text-align:center; margin-top:100px; font-family:-apple-system, BlinkMacSystemFont, sans-serif;">
+  
+  <h1 style="font-size:28px;">📩 Vérifie ton email</h1>
+
+  <p style="color:#555;">
+    Un lien de vérification a été envoyé à ton adresse email.
+  </p>
+
+  <p style="color:#555;">
+    Clique sur le lien dans l’email pour activer ton compte.
+  </p>
+
+  <p style="margin-top:20px; color:#999; font-size:14px;">
+    Si tu ne vois pas l’email, vérifie le dossier spam.
+  </p>
+
+</div>
+
+<div style="display:flex; justify-content:center; margin-top:40px;">
+  
+  <div style="text-align:center; width:260px;">
+    
+    <form action="/resend-email" method="POST">
+      
+      <input 
+        type="email" 
+        name="email" 
+        value="<%= email || '' %>" 
+        readonly
+        style="padding:12px;width:100%;border:1px solid #ddd;border-radius:8px;background:#f5f5f7;text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+
+        <p style="font-size:13px; color:#999; text-align: center; margin-top:8px;">
+            Email envoyé à cette adresse
+        </p>
+      <button 
+        id="resendBtn" 
+        type="submit"
+        style="margin-top:12px;width:100%;padding:12px;background:#0071e3;color:white;border:none;border-radius:8px;font-weight:500;cursor:pointer;">
+        🔁 Renvoyer l’email
+      </button>
+
+    </form>
+
+  </div>
+
+</div>

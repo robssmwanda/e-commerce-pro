@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="stylesheet" href="/css/style.css">
+    <title>iPhone - Apple (FR)</title>
+</head>
+<body>
+    <!-- Votre barre de navigation existante -->
+    <%- include('partials/navbar') %>
+
+    <main class="iphone-page">
+        <!-- 1. Titre Principal -->
+        <h1 class="hero-title">iPhone</h1>
+
+        <!-- 2. Sous-navigation (les petites icônes) -->
+        <nav class="sub-nav">
+            <div class="container-sub">
+                <a href="#" class="sub-item">
+                    <img src="/images/iphone-17-pro.png" alt="iPhone 17 Pro">
+                    <span>iPhone 17 Pro</span>
+                </a>
+                <a href="#" class="sub-item">
+                    <img src="/images/iphone-air.png" alt="iPhone Air">
+                    <span>iPhone Air</span>
+                </a>
+                <!-- Ajoutez les autres ici... -->
+            </div>
+        </nav>
+
+        <!-- 3. Section Explorez -->
+        <section class="explore-section">
+            <div class="container">
+                <h2>Explorez la gamme.</h2>
+                <a href="#" class="more-link">Comparer tous les modèles ></a>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+
+
+<div class="product-card">
+  <!-- Le cadre coloré avec l'image -->
+  <div class="image-wrapper bg-titanium">
+    <img src="/images/iphone-17-pro.png" alt="iPhone 17 Pro">
+    
+    <!-- Les petits points de couleur (dots) -->
+    <div class="color-dots">
+      <span class="dot gold active"></span>
+      <span class="dot grey"></span>
+      <span class="dot black"></span>
+      <span class="dot blue"></span>
+    </div>
+  </div>
+
+  <!-- Les infos en dessous -->
+  <div class="product-info">
+    <h3 class="product-name">iPhone 17 Pro</h3>
+    <p class="product-tagline">Design réinventé.<br>Performances pro repoussées.</p>
+    <p class="product-price">À partir de 55,38 €/mois ou 1 329 €</p>
+  </div>
+</div>
+
+<form action="/signup" method="POST">
+  <% if(error){ %>
+    <div class="error-message"><%= error %></div>
+  <% } %>
+
+  <input type="text" name="name" placeholder="Nom" value="<%= formData?.name || '' %>" required>
+  <input type="email" name="email" placeholder="Email" value="<%= formData?.email || '' %>" required>
+  <input type="password" name="password" placeholder="Mot de passe" required>
+  <input type="password" name="passwordConfirm" placeholder="Confirmer mot de passe" required>
+  <input type="text" name="country" placeholder="Pays" value="<%= formData?.country || '' %>" required>
+  <input type="date" name="dateOfBirth" value="<%= formData?.dateOfBirth || '' %>" required>
+
+  <button type="submit">Créer mon compte</button>
+</form>
+
+<div class="input-full">
+  <select name="country">
+    <option value="">Choisissez votre pays</option>
+
+    <option value="France" <%= formData?.country === 'France' ? 'selected' : '' %>>France</option>
+    <option value="Belgique" <%= formData?.country === 'Belgique' ? 'selected' : '' %>>Belgique</option>
+    <option value="Suisse" <%= formData?.country === 'Suisse' ? 'selected' : '' %>>Suisse</option>
+    <option value="Canada" <%= formData?.country === 'Canada' ? 'selected' : '' %>>Canada</option>
+    <option value="Allemagne" <%= formData?.country === 'Allemagne' ? 'selected' : '' %>>Allemagne</option>
+    <option value="Italie" <%= formData?.country === 'Italie' ? 'selected' : '' %>>Italie</option>
+    <option value="Espagne" <%= formData?.country === 'Espagne' ? 'selected' : '' %>>Espagne</option>
+    <option value="Portugal" <%= formData?.country === 'Portugal' ? 'selected' : '' %>>Portugal</option>
+    <option value="République démocratique du Congo" <%= formData?.country === 'République démocratique du Congo' ? 'selected' : '' %>>
+      République démocratique du Congo
+    </option>
+    <option value="Rwanda" <%= formData?.country === 'Rwanda' ? 'selected' : '' %>>Rwanda</option>
+    <option value="Kenya" <%= formData?.country === 'Kenya' ? 'selected' : '' %>>Kenya</option>
+    <option value="Nigeria" <%= formData?.country === 'Nigeria' ? 'selected' : '' %>>Nigeria</option>
+    <option value="Sénégal" <%= formData?.country === 'Sénégal' ? 'selected' : '' %>>Sénégal</option>
+    <option value="Cameroun" <%= formData?.country === 'Cameroun' ? 'selected' : '' %>>Cameroun</option>
+    <option value="Afrique du Sud" <%= formData?.country === 'Afrique du Sud' ? 'selected' : '' %>>Afrique du Sud</option>
+    <option value="Maroc" <%= formData?.country === 'Maroc' ? 'selected' : '' %>>Maroc</option>
+  </select>
+
+  <% if(errors?.country){ %>
+    <div class="error-message"><%= errors.country %></div>
+  <% } %>
+</div>
+
+   <% if (successMsg && successMsg.length > 0) { %>
+  <div class="flash-message success">
+    <%= successMsg %>
+  </div>
+<% } %>
+
+<% if (errorMsg && errorMsg.length > 0) { %>
+  <div class="flash-message error">
+    <%= errorMsg %>
+  </div>
+<% } %>

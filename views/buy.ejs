@@ -1,0 +1,57 @@
+<section class="buy-section">
+
+  <div class="container-buy">
+    
+    <!-- LEFT -->
+    <div class="left">
+      <h1>
+        Votre nouvel <br>
+        <%= product.name %>.
+      </h1>
+
+      <p>Selon vos préférences.</p>
+
+      <div class="product-image">
+        <img src="<%= product.imgBuyUrl %>" alt="<%= product.name %>">
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+
+      <div class="card">
+        <div class="product-title">
+          <%= product.name %>
+        </div>
+
+        <div class="product-sub">
+          Couleur
+        </div>
+
+        <div class="price">
+          <%= product.price %> €
+        </div>
+      </div>
+
+      <div class="card delivery">
+        🚚 Prêt pour expédition
+        <span>Livraison gratuite • 3 à 5 jours ouvrables</span>
+      </div>
+
+      <button class="btn add-to-cart"
+          data-id="<%= product._id %>"
+          data-name="<%= product.name %>"
+          data-price="<%= product.price %>"
+          data-image="<%= product.imgBuyUrl %>">
+          Ajouter au Panier
+      </button>
+
+      <div class="note">
+        TVA et frais inclus. Conditions applicables.
+      </div>
+
+    </div>
+
+  </div>
+
+</section>

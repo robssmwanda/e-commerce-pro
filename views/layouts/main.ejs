@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/style.css">
+  <title> <%= locals.title || 'Mon site' %></title>
+</head>
+<body>
+
+  <!-- Navbar commun -->
+  <%- include('../partials/navbar') %>
+
+  <!-- Messages flash -->
+  <% if (successMsg.length > 0) { %>
+    <div class="alert success"><%= successMsg[0] %></div>
+  <% } %>
+  <% if (errorMsg.length > 0) { %>
+    <div class="alert error"><%= errorMsg[0] %></div>
+  <% } %>
+
+  <!-- Contenu spécifique à chaque page -->
+  <%- body %>
+
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+</script>
+<script src="/js/script.js"></script>
+</body>
+</html>

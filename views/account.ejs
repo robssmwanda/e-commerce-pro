@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer le compte Apple</title>
+    <!-- Icônes Lucide pour le style Apple -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+          <% if (successMsg && successMsg.length > 0) { %>
+
+            <div class="flash-success">
+               <%= successMsg[0] %>
+            </div>
+
+           <% } %>
+
+         <% if (errorMsg && errorMsg.length > 0) { %>
+
+            <div class="flash-error">
+               <%= errorMsg[0] %>
+            </div>
+
+         <% } %>
+    <!-- Barre de navigation supérieure (Sombre) -->
+    <nav class="global-nav nav-black">
+    <div class="nav-content">
+    <span class="apple-logo"><a href="/"></a></span>
+    <ul>
+      <li><a href="/store">Store</a></li>
+      <li><a href="/mac">Mac</a></li>
+      <li><a href="/ipad">iPad</a></li>
+      <li><a href="/fr/iphone/">iPhone</a></li>
+      <li><a href="/watch">Watch</a></li>
+      <li><a href="/vision">Vision</a></li>
+      <li><a href="/airpods">AirPods</a></li>
+      <li><a href="/tv-home">TV & Maison</a></li>
+      <li><a href="/entertainment">Divertissement</a></li>
+      <li><a href="/accessories">Accessoires</a></li>
+      <li><a href="/support">Assistance</a></li>
+    </ul>
+    <div class="nav-icons">
+      <span><a href="/search">🔍</a></span>
+      <span><a href="/cart">👜</a></span>
+    </div>
+  </div>
+</nav>
+
+    <div class="container">
+        <!-- En-tête avec Titre et Bouton Déconnexion lié à Express -->
+        <header class="page-header">
+            <span class="brand-title">Compte Apple</span>
+            <form action="/logout" method="POST">
+                <button type="submit" class="logout-btn">Déconnexion</button>
+            </form>
+        </header>
+
+        <div class="main-layout">
+            <!-- Barre latérale (Sidebar) -->
+            <aside class="sidebar">
+                <div class="profile-card">
+
+   <!-- Formulaire upload photo -->
+   <form
+      action="/update-profile-photo"
+      method="POST"
+      enctype="multipart/form-data"
+      class="profile-upload-form"
+   >
+
+      <!-- Avatar cliquable -->
+         <label for="profile-upload" class="avatar-container">
+           <img src="/img/users/<%= user.profileImage %>?t=<%= Date.now() %>" alt="Profile" id="profile-img" class="avatar">
+
+                     <div class="avatar-overlay">
+                        <span>Modifier</span>
+                     </div>
+
+                  </label>
+
+                  <!-- Input caché -->
+                  <input
+                     type="file"
+                     id="profile-upload"
+                     name="profileImage"
+                     accept="image/*"
+                     style="display: none;"
+                     onchange="this.form.submit()"
+                  >
+
+               </form>
+
+               <!-- Infos utilisateur -->
+               <div class="profile-info">
+
+                  <h2><%= user.firstname %></h2>
+
+                  <p><%= user.email %></p>
+
+               </div>
+
+            </div>
+               <nav class="side-nav">
+                  <ul>
+                     <li>Informations personnelles</li>
+                     <li class="active">Connexion et sécurité</li>
+                     <li>Paiement et livraison</li>
+                     <li>Abonnements</li>
+                     <li>Partage familial</li>
+                     <li>Appareils</li>
+                     <li>Confidentialité</li>
+                  </ul>
+               </nav>
+         </aside>
+
+            <!-- Section principale -->
+            <section class="content">
+                <h1>Connexion et sécurité</h1>
+                <p class="description">Gérez les réglages relatifs à la connexion à votre compte, à la sécurité du compte et à la récupération de vos données en cas de difficultés pour vous connecter.</p>
+
+  <div class="grid">
+
+      <%
+      const items = [
+
+         {
+            t: 'E-mails et numéros',
+            d: `${user.email}\n${user.phoneNumber || 'Non configuré'}`,
+            icon: 'mail',
+            color: '#0071e3',
+            link: '/account/profile'
+         },
+
+         {
+            t: 'Mot de passe',
+
+            d: (() => {
+
+               const now = new Date();
+
+               const changed = new Date(
+                  user.passwordChangedAt
+               );
+
+               const diffTime = Math.abs(
+                  now - changed
+               );
+
+               const diffDays = Math.floor(
+                  diffTime / (1000 * 60 * 60 * 24)
+               );
+
+               if(diffDays === 0) {
+
+                  return 'Dernière modification : Aujourd’hui';
+
+               } else if(diffDays === 1) {
+
+                  return 'Dernière modification : Hier';
+
+               } else {
+
+                  return `Dernière modification : Il y a ${diffDays} jours`;
+
+               }
+
+            })(),
+
+            icon: 'key',
+            color: '#86868b',
+            link: '/account/password'
+         },
+
+         {
+            t: 'Sécurité du compte',
+            d: user.twoFactorEnabled
+               ? 'Identification à deux facteurs : Activée'
+               : 'Identification à deux facteurs : Désactivée',
+            icon: 'shield-check',
+            color: '#34c759',
+            link: '/account/security'
+         },
+
+         {
+            t: 'Adresse e-mail de notif.',
+            d: user.recoveryEmail || 'Non configuré',
+            icon: 'at-sign',
+            color: '#5856d6',
+            link: '/account/recovery'
+         },
+
+         {
+            t: 'Pays',
+            d: user.country,
+            icon: 'map-pinned',
+            color: '#ff9500',
+            link: '/account/country'
+         },
+
+         {
+            t: 'Role',
+            d: user.role,
+            icon: 'user-plus',
+            color: '#af52de',
+            link: '/account/role'
+         }
+
+      ];
+      %>
+
+   <% items.forEach(item => { %>
+
+      <a href="<%= item.link %>" class="card-link">
+
+         <div class="card">
+
+            <div class="card-body">
+
+               <div class="card-text">
+
+                  <h3><%= item.t %></h3>
+
+                  <p style="white-space: pre-line;">
+                     <%= item.d %>
+                  </p>
+
+               </div>
+
+               <div
+                  class="icon-circle"
+                  style="background-color: <%= item.color %>"
+               >
+                  <i data-lucide="<%= item.icon %>"></i>
+               </div>
+
+            </div>
+
+         </div>
+
+      </a>
+
+      <% }) %>
+      </div>
+<!-- Production version -->
+<script src="https://unpkg.com/lucide@latest"></script>
+   <script>
+    lucide.createIcons();
+  </script>    
+</body>
+</html>

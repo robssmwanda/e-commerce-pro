@@ -1,0 +1,93 @@
+
+<main class="iphone-page">
+  <h1 class="hero-title">iPhone</h1>
+
+  <nav class="sub-nav">
+    <div class="container-sub">
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_iphone_17e.png" alt="iPhone 17 Pro">
+        <span>iPhone 17 Pro</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_iphone_air__.png" alt="iPhone 17 Air">
+        <span>iPhone 17 Air</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_iphone_17__bx67we.png" alt="iPhone 17">
+        <span>iPhone 17</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_iphone_17e__dea.png" alt="iPhone 17e">
+        <span>iPhone 17e</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_iphone_16__qsxcpuiaOoam.png" alt="iPhone 16">
+        <span>iPhone 16</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_compare__.png" alt="Comparer">
+        <span>Comparer</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_accessories__.png" alt="Accessoires">
+        <span>Accessoires</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_shop__.png" alt="Acheter">
+        <span>Acheter un iPhone</span>
+      </a>
+      <a href="#" class="sub-item">
+        <img src="/img/iPhones/nav_ios_.png" alt="iOS">
+        <span>iOS</span>
+      </a>
+    </div>
+  </nav>
+
+  <section class="explore-section">
+    <div class="container"> 
+      <div class="section-header">
+        <h2 class="section-title">Explorez la gamme.</h2>
+        <a href="#" class="more-link">Comparer tous les modèles ></a>
+      </div>
+
+      <div class="product-grid">
+        <% products.forEach(product => { %>
+          <div class="product-card">
+
+            <div class="product-image-container">
+              <img src="<%= product.imgUrl %>" alt="<%= product.name %>">
+            </div>
+
+            <div class="color-selection">
+              <span class="dot gold active"></span>
+              <span class="dot silver"></span>
+              <span class="dot graphite"></span>
+            </div>
+
+            <div class="product-info">
+              <h3 class="product-name"><%= product.name %></h3>
+
+              <p class="product-tagline">
+                Design réinventé.<br>Performances pro repoussées.
+              </p>
+
+              <p class="product-price">
+                À partir <%= product.price %> €
+              </p>
+
+              <div class="product-actions">
+                <button class="btn-blue">En savoir plus</button>
+
+                <a href="/buy/<%= product.slug || 'fallback' %>" class="link-buy">
+                  Acheter >
+                </a>
+              </div>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+
+    </div>
+  </section>
+</main>

@@ -1,0 +1,18 @@
+<div class="order-details">
+  <h1>Détail commande</h1>
+
+  <p><strong>Date:</strong> <%= new Date(order.createdAt).toLocaleString() %></p>
+  <p><strong>Total:</strong> <%= order.total %>$</p>
+
+  <div class="items">
+    <% order.items.forEach(item => { %>
+      <div class="item">
+        <img src="<%= item.image %>" />
+        <div>
+          <h3><%= item.name %></h3>
+          <p><%= item.quantity %> x <%= item.price %>$</p>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>

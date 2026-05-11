@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/style.css">
+  <title> <%= locals.title || 'Mon site' %></title>
+</head>
+<body>
+
+<!-- ================= NAVBAR GLOBAL ================= -->
+<nav class="global-nav">
+  <div class="container">
+    <ul>
+      <li><a href="/" style="font-size: 18px;"></a></li>
+      <li><a href="#">Store</a></li>
+      <li><a href="#">Mac</a></li>
+      <li><a href="#">iPad</a></li>
+      <li><a href="/fr/iphone/">iPhone</a></li>
+      <li><a href="#">Watch</a></li>
+      <li><a href="#">Vision</a></li>
+      <li><a href="#">AirPods</a></li>
+      <li><a href="#">TV & Maison</a></li>
+      <li><a href="#">Divertissement</a></li>
+      <li><a href="#">Accessoire</a></li>
+      <li><a href="#">Assisstance</a></li>
+
+      <!-- Search -->
+      <li>
+        <a href="#">
+          <i data-lucide="search" style="width:16px;height:16px;"></i>
+        </a>
+      </li>
+
+      <!-- Cart -->
+      <li class="cart-icon">
+        <a href="/cart-page">
+          <i data-lucide="shopping-bag" style="width:16px;height:16px;"></i>
+
+          <% if (locals.cartCount > 0) { %>
+            <span class="cart-count"><%= locals.cartCount %></span>
+          <% } %>
+
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ================= FLASH MESSAGES ================= -->
+<div class="container">
+  <% if (successMsg && successMsg.length > 0) { %>
+    <div class="flash-message success">
+      <%= successMsg %>
+    </div>
+  <% } %>
+
+  <% if (errorMsg && errorMsg.length > 0) { %>
+    <div class="flash-message error">
+      <%= errorMsg %>
+    </div>
+  <% } %>
+</div>
+
+<!-- ================= NAV COMPTE ================= -->
+<nav class="local-nav">
+  <div class="container">
+    <span class="nav-title">Compte Apple</span>
+
+    <ul class="nav-links">
+
+      <% if (!user) { %>
+        <li><a href="/sign-in">Connectez-vous</a></li>
+        <li><a href="/sign-up">Créer votre compte Apple</a></li>
+      <% } %>
+
+      <li><a href="#">Q&R</a></li>
+
+      <% if (user) { %>
+
+        <li>
+          <a href="/orders">
+            <i data-lucide="package" style="width:16px;height:16px;"></i>
+            Mes commandes
+          </a>
+        </li>
+
+        <li>
+          <a href="/account">Gerer votre compte</a>
+        </li>
+
+        <li>
+          <form action="/logout" method="POST" style="display:inline;">
+            <button type="submit" class="logout-btn">Déconnexion</button>
+          </form>
+        </li>
+
+      <% } %>
+
+    </ul>
+  </div>
+</nav>
+
+<!-- ================= SCRIPTS ================= -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+</script>
+
+<script src="/js/script.js"></script>
+
+</body>
+</html>

