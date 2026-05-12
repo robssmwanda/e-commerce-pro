@@ -41,8 +41,8 @@ exports.checkoutStripe = async (req, res) => {
       line_items,
 
       // 🔥 URL propre
-      success_url: `https://onrender.com`,
-      cancel_url: `https://onrender.com`,
+      success_url: `https://e-commerce-pro-b9ab.onrender.com/`,
+      cancel_url: `https://e-commerce-pro-b9ab.onrender.com/`,
       customer_email: user.email,
 
       metadata: {
