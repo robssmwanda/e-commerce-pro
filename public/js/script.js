@@ -1,6 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log("SCRIPT OK");
 
+  // ==========================================
+  // AFFICHAGE DU MESSAGE DE SUCCÈS APRÈS STRIPE
+  // ==========================================
+  // Si on est sur la page de succès, on force le badge du panier à s'effacer
+      if (window.location.pathname === '/success') {
+        const badge = document.querySelector('.cart-count');
+        if (badge) badge.style.display = 'none';
+      }
+
+  // L'accolade fermante incorrecte a été supprimée ici 🛠️
+
   let updatingCart = false;
 
   // =========================
@@ -68,13 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
   btns.forEach(btn => {
     btn.addEventListener('click', async function () {
 
-      // 🔥 anti double clic
       if (this.disabled) return;
 
       this.disabled = true;
       updatingCart = true;
 
-      // 🔥 UX blocage visuel
       this.style.opacity = "0.6";
       this.style.cursor = "not-allowed";
 
@@ -106,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.status === 'success') {
 
-          // 🔥 update badge
           const badge = document.querySelector('.cart-count');
           if (badge) {
             badge.textContent = data.totalQty;
@@ -115,11 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
               : 'inline-block';
           }
 
-          // 🔥 feedback bouton
           this.innerText = "Ajouté ✓";
           this.style.background = "#000";
 
-          // 🔥 toast
           const toast = document.createElement('div');
           toast.textContent = 'Produit ajouté au panier 🛒';
           toast.className = 'toast';
@@ -132,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => toast.remove(), 300);
           }, 2000);
 
-          // 🔥 reset bouton (SEULEMENT ici)
           setTimeout(() => {
             this.innerText = "Ajouter au panier";
             this.style.background = "";
@@ -143,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 1500);
 
         } else {
-          // 🔥 reset si erreur logique
           this.disabled = false;
           this.style.opacity = "";
           this.style.cursor = "";
@@ -152,8 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         console.error('Erreur ajout panier:', err);
-
-        // 🔥 reset si erreur serveur
         this.disabled = false;
         this.style.opacity = "";
         this.style.cursor = "";
@@ -166,28 +168,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const resendBtn = document.getElementById('resendBtn');
   let sendingEmail = false;
 
-      if (resendBtn) {
-      resendBtn.addEventListener('click', () => {
-        if (sendingEmail) return;
+  if (resendBtn) {
+    resendBtn.addEventListener('click', () => {
+      if (sendingEmail) return;
 
-         sendingEmail = true;
+      sendingEmail = true;
 
-        // ⏳ on laisse le form partir d'abord
-        setTimeout(() => {
-          resendBtn.disabled = true;
-          resendBtn.innerText = "Envoi en cours...";
-        }, 50);
-      });
-    }
+      setTimeout(() => {
+        resendBtn.disabled = true;
+        resendBtn.innerText = "Envoi en cours...";
+      }, 50);
+    });
+    
+    resendBtn.addEventListener('click', () => {
+       resendBtn.style.transform = "scale(0.98)";
+    });
+  }
 
-  resendBtn.addEventListener('click', () => {
-     resendBtn.style.transform = "scale(0.98)";
-  });
+}); // ✅ L'écouteur global DOMContentLoaded se ferme correctement ici maintenant
 
-});
-
-// public/js/script.js
-
+// ==========================================
+// FONCTIONS GLOBALES (ACCESSIBLES VIA WINDOW)
+// ==========================================
 window.confirmDelete = async function (url, itemId) {
   const confirmAction = confirm("Voulez-vous supprimer cet élément ?");
   if (!confirmAction) return;
@@ -216,20 +218,24 @@ window.payWithStripe = async function () {
 
     const res = await fetch('/create-checkout-session', {
       method: 'POST',
-      credentials: 'include' // 🔥 TRÈS IMPORTANT
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
     });
 
     const data = await res.json();
     console.log("STRIPE RESPONSE:", data);
 
     if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert(data.message || 'Erreur Stripe');
+      // 🔥 FORCER REDIRECTION PROPRE
+      window.location.assign(data.url);
+      return;
     }
+
+    alert(data.message || 'Erreur Stripe');
 
   } catch (err) {
     console.error(err);
   }
-
 };

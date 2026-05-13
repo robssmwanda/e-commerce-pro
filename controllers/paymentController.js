@@ -41,8 +41,15 @@ exports.checkoutStripe = async (req, res) => {
       line_items,
 
       // 🔥 URL propre
-      success_url: `https://e-commerce-pro-b9ab.onrender.com/`,
-      cancel_url: `https://e-commerce-pro-b9ab.onrender.com/`,
+      //success_url: `https://e-commerce-pro-b9ab.onrender.com/`,
+      //success_url: 'http://localhost:3000/success.html?session_id={CHECKOUT_SESSION_ID}',
+      //cancel_url: `https://e-commerce-pro-b9ab.onrender.com/`,
+
+      //success_url: 'http://localhost:3000/success',
+      // ✅ Les URLs s'adapteront toutes seules (en local comme sur Render)
+      success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`, 
+      cancel_url: `${process.env.CLIENT_URL}/cart-page`,
+
       customer_email: user.email,
 
       metadata: {
@@ -51,7 +58,10 @@ exports.checkoutStripe = async (req, res) => {
       }
     })
 
-    return res.redirect(session.url)
+    return res.json({ 
+      status: 'success', 
+      url: session.url 
+    });
 
   } catch (err) {
     console.error("❌ CHECKOUT ERROR:", err)

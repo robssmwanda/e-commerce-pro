@@ -43,11 +43,9 @@
       Total: <%= total %>$
     </div>
 
- <form action="/create-checkout-session" method="POST">
-  <button class="checkout-btn">
-    Passer la commande
-  </button>
-</form>
+ <button type="button" class="checkout-btn" onclick="payWithStripe()">
+  Passer la commande
+</button>
 
   <% } %>
 </div>

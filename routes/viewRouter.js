@@ -25,13 +25,10 @@ router.get(
 );
 
 router.get('/success', (req, res) => {
-
    console.log("SUCCESS ROUTE HIT");
-
    res.render('success', {
       title: 'Paiement reussie'
    });
-
 });
 
 router.get('/check-email', (req, res) => {
