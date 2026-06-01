@@ -103,7 +103,7 @@ exports.webhookStripe = async (req, res) => {
     name: item.description,
     price: item.amount_total / 100,
     quantity: item.quantity,
-    image: item.price?.product?.images?.[0] || ''
+    image: item.price?.product?.image?.[0] || ''
   }))
 
   const total = session.amount_total / 100
