@@ -64,6 +64,9 @@ app.use(
         fontSrc: ["'self'", "https://gstatic.com"],
       },
     },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "unsafe-none" }, 
+    crossOriginResourcePolicy: { policy: "cross-origin" } 
   })
 );
 
