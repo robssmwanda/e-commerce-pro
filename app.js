@@ -30,10 +30,11 @@ app.use(session({
   }),
   cookie: {
     httpOnly: true,
-    secure: false,
-    sameSite: 'lax',
+    secure: process.env.NODE_EVEN === 'production',
+    sameSite: process.env.NODE_EVEN === 'production' ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24
-  }
+  },
+   proxy: process.env.NODE_ENV === 'production'
 }));
 
 app.use(flash())
