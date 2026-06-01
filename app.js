@@ -3,7 +3,6 @@ const path = require('path')
 const app = express()
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
-const mongoSanitize = require('express-mongo-sanitize')
 const flash = require('connect-flash')
 const MongoStore = require('connect-mongo')
 const { protect } = require('./middlewares/authMiddlewares')
@@ -16,7 +15,7 @@ const User = require('./models/User');
 const expressLayouts = require('express-ejs-layouts');
 const cookieParser = require('cookie-parser');
 
-// 1. Route Webhook Stripe (doit rester tout en haut)
+// 1. Route Webhook Stripe (Doit rester tout en haut)
 app.post(
   '/webhook-stripe',
   express.raw({ type: 'application/json' }),
@@ -51,24 +50,39 @@ app.use(session({
 
 app.use(flash())
 
-// 4. Configuration de Helmet (Syntaxe CSP corrigée avec les bonnes URLs de CDN et de Stripe)
+// 4. Configuration de Helmet (Sécurisée pour vos images et CDN)
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        connectSrc: ["'self'", "https://api.stripe.com"],
-        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://*.unsplash.com", "https://*.onrender.com"], // ✅ Correction de la virgule manquante et ajout des wildcards (*.)
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        connectSrc: ["'self'", "https://stripe.com"],
+        frameSrc: ["'self'", "https://stripe.com", "https://stripe.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://stripe.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://googleapis.com"],
+        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://*.unsplash.com", "https://*.onrender.com"], 
+        fontSrc: ["'self'", "https://gstatic.com"],
       },
     },
   })
 );
 
-app.use(mongoSanitize())
+// ✅ REMPLACE LE MIDDLEWARE EN CONFLIT : Nettoyage NoSQL manuel et sécurisé pour req.body
+app.use((req, res, next) => {
+  const sanitize = (obj) => {
+    if (obj instanceof Object) {
+      for (var key in obj) {
+        if (/^\$/.test(key)) {
+          delete obj[key];
+        } else {
+          sanitize(obj[key]);
+        }
+      }
+    }
+  };
+  if (req.body) sanitize(req.body);
+  next();
+});
 
 // 5. Middleware Utilisateur / Flash Messages
 app.use(async (req, res, next) => {
