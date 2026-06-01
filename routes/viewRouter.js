@@ -5,6 +5,7 @@ const viewController = require('../controllers/viewController');
 const authController = require('./../controllers/authController');
 const cartController = require('./../controllers/cartController');
 const Cart = require('../models/Cart');
+const Order = require('../models/Order');
 const upload = require('../utils/multer')
 
 const {
@@ -32,35 +33,65 @@ router.get(
 //    });
 // });
 
+
 router.get('/success', async (req, res) => {
    try {
-      console.log("🔥 SUCCESS ROUTE HIT - Tentative de vidage du panier...");
+      console.log("🔥 PAGE SUCCESS : Tentative d'enregistrement de la commande...");
       
-      // 1. Récupérer l'identifiant de l'utilisateur connecté via sa session
-      const userId = req.user?._id || req.session.userId;
+      // Récupération de l'utilisateur connecté
+      const userId = req.user?._id || req.session?.userId;
       
-      // 2. Si l'utilisateur est bien identifié, on vide son panier en base de données
       if (userId) {
+         // 1. Trouver le panier actuel de l'utilisateur AVANT de le vider
          const cart = await Cart.findOne({ user: userId });
-         if (cart) {
-            cart.items = []; // On efface les articles
+         
+         if (cart && cart.items.length > 0) {
+            
+            // 2. Transférer TOUTES les données du panier (y compris l'image !) vers les items de la commande
+            const orderItems = cart.items.map(item => ({
+               productId: item.productId,
+               name: item.name,
+               price: item.price,
+               quantity: item.quantity,
+               image: item.image // 🔥 ICI : L'image présente dans le panier est sauvegardée
+            }));
+
+            // Calcul du montant total
+            const total = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+            // Récupération facultative de l'ID de session Stripe depuis l'URL
+            const stripeSessionId = req.query.session_id || '';
+
+            // 3. Créer la commande en base de données avec les images
+            await Order.create({
+               user: userId,
+               items: orderItems,
+               total: total,
+               stripeSessionId: stripeSessionId,
+               status: 'paid'
+            });
+            console.log("✅ Commande enregistrée avec succès avec ses images !");
+
+            // 4. Vider le panier maintenant que la commande est sécurisée
+            cart.items = [];
             await cart.save();
-            console.log("🧹 Panier vidé avec succès en production !");
+            console.log("🧹 Panier vidé.");
+         } else {
+            console.log("⚠️ Panier déjà vide ou inexistant (Commande probablement déjà enregistrée).");
          }
       } else {
-         console.log("⚠️ Impossible de vider le panier : Aucun userId trouvé dans la session.");
+         console.log("❌ Impossible de créer la commande : Aucun utilisateur connecté trouvé.");
       }
 
    } catch (err) {
-      console.error("❌ Erreur lors du vidage du panier sur la page success :", err.message);
+      console.error("❌ Erreur lors du traitement sur la page success :", err.message);
    }
 
-   // 3. On affiche la page de succès quoi qu'il arrive
+   // Affichage de la page de succès e-commerce
    res.render('success', {
       title: 'Paiement réussi'
    });
 });
-
 
 router.get('/check-email', (req, res) => {
 
