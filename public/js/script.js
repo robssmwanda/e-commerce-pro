@@ -216,43 +216,43 @@ window.payWithStripe = async function () {
   try {
     console.log("🚀 Clic sur le bouton de paiement détecté !");
 
-    // On change l'URL et la méthode pour correspondre au backend
-    // Si votre route dans paymentRoute s'appelle autrement (ex: /checkout-stripe), modifiez ici :
-    const res = await fetch('/checkout-stripe', {
-      method: 'GET', // 👈 Passe en GET car la session gère l'ID utilisateur
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.innerText = "Chargement...";
+      checkoutBtn.disabled = true;
+    }
+
+    // ✅ CORRECTION : Requête POST sur l'URL exacte du routeur backend
+    const res = await fetch('/create-checkout-session', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include' // Indispensable pour transmettre le cookie de session sur Render
+      credentials: 'include' // Indispensable pour transmettre la session utilisateur sur Render
     });
 
-    // Si la route renvoie une erreur 404 (non trouvée), on bascule sur l'alternative POST
-    if (res.status === 404) {
-      console.log("⚠️ Route GET non trouvée, tentative en POST sur /checkout-stripe...");
-      const retryRes = await fetch('/checkout-stripe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      handleStripeResponse(await retryRes.json());
-      return;
-    }
-
     const data = await res.json();
-    handleStripeResponse(data);
+    console.log("💳 Réponse reçue du serveur backend :", data);
+
+    // ✅ Traitement direct de la réponse
+    if (data.status === 'success' && data.url) {
+      window.location.assign(data.url); // 🚀 Redirection instantanée vers Stripe !
+    } else {
+      alert(data.message || 'Erreur lors de la création de la session Stripe.');
+      if (checkoutBtn) {
+        checkoutBtn.innerText = "Passer la commande";
+        checkoutBtn.disabled = false;
+      }
+    }
 
   } catch (err) {
     console.error("❌ Erreur lors de l'appel au Checkout Stripe:", err);
     alert("Impossible de joindre le serveur de paiement.");
+    
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.innerText = "Passer la commande";
+      checkoutBtn.disabled = false;
+    }
   }
 };
-
-// Fonction d'aide pour exécuter la redirection
-function handleStripeResponse(data) {
-  console.log("💳 Réponse reçue de Stripe:", data);
-  if (data.status === 'success' && data.url) {
-    window.location.assign(data.url); // 🚀 Ouvre la page Stripe
-  } else {
-    alert(data.message || 'Erreur lors de la création de la session Stripe.');
-  }
-}
