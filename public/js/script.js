@@ -214,28 +214,45 @@ window.confirmDelete = async function (url, itemId) {
 
 window.payWithStripe = async function () {
   try {
-    console.log("CLICK OK");
+    console.log("🚀 Clic sur le bouton de paiement détecté !");
 
-    const res = await fetch('/create-checkout-session', {
-      method: 'POST',
+    // On change l'URL et la méthode pour correspondre au backend
+    // Si votre route dans paymentRoute s'appelle autrement (ex: /checkout-stripe), modifiez ici :
+    const res = await fetch('/checkout-stripe', {
+      method: 'GET', // 👈 Passe en GET car la session gère l'ID utilisateur
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include'
+      credentials: 'include' // Indispensable pour transmettre le cookie de session sur Render
     });
 
-    const data = await res.json();
-    console.log("STRIPE RESPONSE:", data);
-
-    if (data.url) {
-      // 🔥 FORCER REDIRECTION PROPRE
-      window.location.assign(data.url);
+    // Si la route renvoie une erreur 404 (non trouvée), on bascule sur l'alternative POST
+    if (res.status === 404) {
+      console.log("⚠️ Route GET non trouvée, tentative en POST sur /checkout-stripe...");
+      const retryRes = await fetch('/checkout-stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      handleStripeResponse(await retryRes.json());
       return;
     }
 
-    alert(data.message || 'Erreur Stripe');
+    const data = await res.json();
+    handleStripeResponse(data);
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erreur lors de l'appel au Checkout Stripe:", err);
+    alert("Impossible de joindre le serveur de paiement.");
   }
 };
+
+// Fonction d'aide pour exécuter la redirection
+function handleStripeResponse(data) {
+  console.log("💳 Réponse reçue de Stripe:", data);
+  if (data.status === 'success' && data.url) {
+    window.location.assign(data.url); // 🚀 Ouvre la page Stripe
+  } else {
+    alert(data.message || 'Erreur lors de la création de la session Stripe.');
+  }
+}
