@@ -4,6 +4,7 @@ const router = express.Router();
 const viewController = require('../controllers/viewController');
 const authController = require('./../controllers/authController');
 const cartController = require('./../controllers/cartController');
+const Cart = require('../models/Cart');
 const upload = require('../utils/multer')
 
 const {
@@ -24,12 +25,42 @@ router.get(
    viewController.getBuyPage
 );
 
-router.get('/success', (req, res) => {
-   console.log("SUCCESS ROUTE HIT");
+// router.get('/success', (req, res) => {
+//    console.log("SUCCESS ROUTE HIT");
+//    res.render('success', {
+//       title: 'Paiement reussie'
+//    });
+// });
+
+router.get('/success', async (req, res) => {
+   try {
+      console.log("🔥 SUCCESS ROUTE HIT - Tentative de vidage du panier...");
+      
+      // 1. Récupérer l'identifiant de l'utilisateur connecté via sa session
+      const userId = req.user?._id || req.session.userId;
+      
+      // 2. Si l'utilisateur est bien identifié, on vide son panier en base de données
+      if (userId) {
+         const cart = await Cart.findOne({ user: userId });
+         if (cart) {
+            cart.items = []; // On efface les articles
+            await cart.save();
+            console.log("🧹 Panier vidé avec succès en production !");
+         }
+      } else {
+         console.log("⚠️ Impossible de vider le panier : Aucun userId trouvé dans la session.");
+      }
+
+   } catch (err) {
+      console.error("❌ Erreur lors du vidage du panier sur la page success :", err.message);
+   }
+
+   // 3. On affiche la page de succès quoi qu'il arrive
    res.render('success', {
-      title: 'Paiement reussie'
+      title: 'Paiement réussi'
    });
 });
+
 
 router.get('/check-email', (req, res) => {
 
