@@ -1,7 +1,7 @@
 const express = require('express')
 const path = require('path')
 const app = express()
-//const helmet = require('helmet')
+const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 const flash = require('connect-flash')
 const MongoStore = require('connect-mongo')
@@ -51,14 +51,14 @@ app.use(session({
 app.use(flash())
 
 // 4. Configuration de Helmet (Désactivation de la CSP pour libérer les scripts)
-// app.use(
-//   helmet({
-//     contentSecurityPolicy: false, // 🔓 Libère totalement votre bouton de paiement "inline" et Stripe
-//     crossOriginEmbedderPolicy: false,
-//     crossOriginOpenerPolicy: { policy: "unsafe-none" }, 
-//     crossOriginResourcePolicy: { policy: "cross-origin" } 
-//   })
-// );
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // 🔓 Libère totalement votre bouton de paiement "inline" et Stripe
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "unsafe-none" }, 
+    crossOriginResourcePolicy: { policy: "cross-origin" } 
+  })
+);
 
 // ✅ Nettoyage NoSQL manuel et sécurisé pour req.body
 app.use((req, res, next) => {
