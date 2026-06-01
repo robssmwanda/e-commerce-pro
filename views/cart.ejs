@@ -50,3 +50,65 @@
   <% } %>
 </div>
 
+<!-- 🔥 INJECTION DU SCRIPT DE PAIEMENT DIRECTEMENT DANS LA PAGE PANIER -->
+<script>
+async function payWithStripe() {
+  try {
+    console.log("🚀 Clic sur le bouton de paiement détecté directement depuis le EJS !");
+    
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.innerText = "Chargement...";
+      checkoutBtn.disabled = true;
+    }
+
+    // Appel à votre route de paiement Express
+    // Si votre route de création de session Stripe s'appelle autrement (ex: /create-checkout-session), modifiez l'adresse ici :
+    const res = await fetch('/checkout-stripe', {
+      method: 'GET', // GET car votre fonction 'checkoutStripe' récupère l'utilisateur depuis req.session
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include' // Obligatoire pour transmettre la session utilisateur sur Render
+    });
+
+    // Sécurité : Si votre route backend attend du POST au lieu du GET, on gère automatiquement la bascule
+    if (res.status === 404 || res.status === 405) {
+      console.log("⚠️ Route GET non configurée, bascule automatique sur POST...");
+      const retryRes = await fetch('/checkout-stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const retryData = await retryRes.json();
+      handleStripeRedirect(retryData, checkoutBtn);
+      return;
+    }
+
+    const data = await res.json();
+    handleStripeRedirect(data, checkoutBtn);
+
+  } catch (err) {
+    console.error("❌ Erreur lors du clic de paiement :", err);
+    alert("Une erreur de communication avec le serveur est survenue.");
+    resetCheckoutButton();
+  }
+}
+
+function handleStripeRedirect(data, button) {
+  console.log("💳 Réponse de votre serveur backend :", data);
+  if (data.status === 'success' && data.url) {
+    window.location.href = data.url; // 🚀 Redirection instantanée vers Stripe
+  } else {
+    alert(data.message || 'Erreur lors de la création de la session de paiement.');
+    resetCheckoutButton(button);
+  }
+}
+
+function resetCheckoutButton(button) {
+  if (button) {
+    button.innerText = "Passer la commande";
+    button.disabled = false;
+  }
+}
+</script>
