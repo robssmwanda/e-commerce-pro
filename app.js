@@ -50,27 +50,17 @@ app.use(session({
 
 app.use(flash())
 
-// 4. Configuration de Helmet (Sécurisée pour vos images et CDN)
+// 4. Configuration de Helmet (Désactivation de la CSP pour libérer les scripts)
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        connectSrc: ["'self'", "https://stripe.com"],
-        frameSrc: ["'self'", "https://stripe.com", "https://stripe.com"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://stripe.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://googleapis.com"],
-        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://*.unsplash.com", "https://*.onrender.com"], 
-        fontSrc: ["'self'", "https://gstatic.com"],
-      },
-    },
+    contentSecurityPolicy: false, // 🔓 Libère totalement votre bouton de paiement "inline" et Stripe
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: { policy: "unsafe-none" }, 
     crossOriginResourcePolicy: { policy: "cross-origin" } 
   })
 );
 
-// ✅ REMPLACE LE MIDDLEWARE EN CONFLIT : Nettoyage NoSQL manuel et sécurisé pour req.body
+// ✅ Nettoyage NoSQL manuel et sécurisé pour req.body
 app.use((req, res, next) => {
   const sanitize = (obj) => {
     if (obj instanceof Object) {
