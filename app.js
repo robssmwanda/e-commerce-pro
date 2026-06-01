@@ -32,9 +32,9 @@ const limiter = rateLimit({
   message: 'Trop de requetes depuis cette IP, ressayez plus tard.'
 })
 
-// 3. Configuration de la Session (Correction de NODE_ENV)
+// 3. Configuration de la Session
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'secret123', // 🔥 Conseil : utilisez une variable d'environnement
+  secret: process.env.SESSION_SECRET || 'secret123', 
   resave: false,
   saveUninitialized: false, 
   store: MongoStore.create({
@@ -42,8 +42,8 @@ app.use(session({
   }),
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // ✅ FIX : Correction de NODE_EVEN en NODE_ENV
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // ✅ FIX : Correction de NODE_EVEN en NODE_ENV
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
     maxAge: 1000 * 60 * 60 * 24
   },
   proxy: process.env.NODE_ENV === 'production'
@@ -51,18 +51,18 @@ app.use(session({
 
 app.use(flash())
 
-// 4. Configuration de Helmet pour autoriser les images de Stripe et des CDN
+// 4. Configuration de Helmet (Syntaxe CSP corrigée avec les bonnes URLs de CDN et de Stripe)
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        connectSrc: ["'self'", "https://stripe.com"],
-        frameSrc: ["'self'", "https://stripe.com", "https://stripe.com"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://stripe.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://googleapis.com"],
-        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://unsplash.com", "https://onrender.com"], // ✅ Autorise les images Stripe et votre propre site
-        fontSrc: ["'self'", "https://gstatic.com"],
+        connectSrc: ["'self'", "https://api.stripe.com"],
+        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https://*.stripe.com", "https://*.unsplash.com", "https://*.onrender.com"], // ✅ Correction de la virgule manquante et ajout des wildcards (*.)
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
       },
     },
   })
@@ -112,7 +112,7 @@ app.set('views', path.join(__dirname, 'views'))
 app.use(cartMiddleware)
 
 // 7. Routes et Application du Limiter
-app.use('/login', limiter) // S'applique uniquement sur le POST/GET /login
+app.use('/login', limiter) 
 app.use('/', viewRouter)
 app.use('/', require('./routes/paymentRoute'))
 app.use('/cart', cartRouter)
