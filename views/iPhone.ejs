@@ -64,9 +64,11 @@
             </div>
 
             <div class="product-info">
-              <!-- Gestion visuelle du stock de la base de données -->
-              <% if (product.stock > 0) { %>
-                <span class="badge-stock in-stock">En stock (<%= product.stock %>)</span>
+              <!-- Gestion visuelle sécurisée du stock -->
+              <% if (typeof product.stock !== 'undefined' && product.stock > 10) { %>
+                <span class="badge-stock in-stock">En stock</span>
+              <% } else if (typeof product.stock !== 'undefined' && product.stock > 0 && product.stock <= 10) { %>
+                <span class="badge-stock low-stock"><%= product.stock %></span>
               <% } else { %>
                 <span class="badge-stock out-of-stock">Rupture de stock</span>
               <% } %>
@@ -84,8 +86,8 @@
               <div class="product-actions">
                 <button class="btn-blue">En savoir plus</button>
 
-                <!-- Désactivation optionnelle du lien d'achat si rupture de stock -->
-                <% if (product.stock > 0) { %>
+                <!-- Désactivation du lien d'achat si rupture de stock -->
+                <% if (typeof product.stock !== 'undefined' && product.stock > 0) { %>
                   <a href="/buy/<%= product.slug || 'fallback' %>" class="link-buy">
                     Acheter >
                   </a>
@@ -102,5 +104,4 @@
     </div>
   </section>
 </main>
-
 

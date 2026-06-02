@@ -1871,6 +1871,14 @@ li a {
     color: #c5221f;
   }
 
+  .badge-stock.low-stock {
+    background-color: #fff3e0;
+    color: #e65100;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 4px 12px;
+  }
+
   /* Correction du titre du produit */
   .product-name {
     margin: 0 0 8px 0;
