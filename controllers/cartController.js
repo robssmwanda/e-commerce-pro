@@ -1,5 +1,6 @@
 const Cart = require('../models/Cart')
 const User = require('../models/User');
+const Product = require('../models/Product'); // 🔥 SÉCURITÉ : Importation obligatoire pour vérifier le stock réel
 
 exports.getCart = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ exports.getCart = async (req, res) => {
 
     res.json({
       status: 'success',
-      cart: cart ? cart.items : [] // 🔥 FIX
+      cart: cart ? cart.items : []
     });
 
   } catch (err) {
@@ -34,8 +35,24 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    const userId = req.user._id;
+    // 🔥 SÉCURITÉ SERVEUR : On récupère le stock réel du produit en base de données
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Produit introuvable'
+      });
+    }
 
+    // Si le stock initial est déjà épuisé (0 ou moins)
+    if (product.stock <= 0) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Désolé, ce produit est en rupture de stock.'
+      });
+    }
+
+    const userId = req.user._id;
     let cart = await Cart.findOne({ user: userId });
 
     if (!cart) {
@@ -51,6 +68,13 @@ exports.addToCart = async (req, res) => {
     });
 
     if (existingItem) {
+      // 🔥 SÉCURITÉ : On vérifie si ajouter +1 dépasse le stock disponible en BDD
+      if (existingItem.quantity + 1 > product.stock) {
+        return res.status(400).json({
+          status: 'fail',
+          message: `Impossible d'ajouter plus d'articles. Stock maximum disponible : ${product.stock}`
+        });
+      }
       existingItem.quantity += 1;
     } else {
       cart.items.push({
@@ -64,14 +88,12 @@ exports.addToCart = async (req, res) => {
 
     await cart.save();
 
-    // 🔥 AJOUT ICI
     const totalQty = cart.items.reduce((acc, item) => acc + item.quantity, 0);
 
-    // 🔥 MODIFIE LA RÉPONSE
     res.status(200).json({
       status: 'success',
       cart: cart.items,
-      totalQty   // 👈 IMPORTANT
+      totalQty
     });
 
   } catch (err) {
@@ -86,7 +108,6 @@ exports.addToCart = async (req, res) => {
 exports.removeFromCart = async (req, res) => {
   try {
     const productId = req.params.productId;
-
     const cart = await Cart.findOne({ user: req.user._id });
 
     if (!cart) {
@@ -99,7 +120,6 @@ exports.removeFromCart = async (req, res) => {
 
     await cart.save();
 
-    // 🔥 recalcul du total
     const total = cart.items.reduce((acc, item) => {
       return acc + item.price * item.quantity;
     }, 0);
@@ -118,18 +138,26 @@ exports.removeFromCart = async (req, res) => {
 exports.increaseQuantity = async (req, res) => {
   try {
     const productId = req.params.productId;
-
     const cart = await Cart.findOne({ user: req.user._id });
 
+    // Trouver l'item ciblé dans le panier
     const item = cart.items.find(
       item => item._id.toString() === productId
     );
 
     if (item) {
+      // 🔥 SÉCURITÉ : On va chercher le produit d'origine pour contrôler son stock
+      const product = await Product.findById(item.productId);
+      
+      if (!product || item.quantity + 1 > product.stock) {
+        console.log(`🚨 Blocage quantité panier : Limite de stock atteinte (${product ? product.stock : 0})`);
+        // Redirige vers le panier avec un paramètre d'erreur pour notifier le client
+        return res.redirect('/cart?error=stock_limit');
+      }
+      
       item.quantity += 1;
+      await cart.save();
     }
-
-    await cart.save();
 
     res.redirect('/cart');
 
@@ -142,7 +170,6 @@ exports.increaseQuantity = async (req, res) => {
 exports.decreaseQuantity = async (req, res) => {
   try {
     const productId = req.params.productId;
-
     const cart = await Cart.findOne({ user: req.user._id });
 
     const item = cart.items.find(
@@ -161,7 +188,6 @@ exports.decreaseQuantity = async (req, res) => {
 
     await cart.save();
 
-    // 🔥 CALCUL TOTAL
     const total = cart.items.reduce((acc, item) => {
       return acc + item.price * item.quantity;
     }, 0);
@@ -176,7 +202,3 @@ exports.decreaseQuantity = async (req, res) => {
     res.status(500).json({ status: 'error' });
   }
 };
-
-
-
-
