@@ -1,12 +1,11 @@
 <div class="cart-container">
   <h1>Mon Panier</h1>
 
-  <% if (typeof errorMsg !== 'undefined' && errorMsg.length > 0) { %>
-  <div style="background-color: #fff3e0; color: #e65100; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 14px;">
-    ⚠️ <%= errorMsg %>
+  <!-- Zone d'alerte universelle (Gère le Flash au chargement ET le JavaScript dynamique) -->
+  <div id="stock-error-container" 
+       style="<% if (typeof errorMsg !== 'undefined' && errorMsg.length > 0) { %> display: block; <% } else { %> display: none; <% } %> background-color: #fff3e0; color: #e65100; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 14px;">
+    ⚠️ <span id="stock-error-text"><%= (typeof errorMsg !== 'undefined' && errorMsg.length > 0) ? errorMsg : '' %></span>
   </div>
-  <% } %>
-
 
   <% if (!cart || cart.length === 0) { %>
     <p class="empty">Votre panier est vide</p>
@@ -17,7 +16,7 @@
 
       <% cart.forEach(item => { %>
 
-        <div class="cart-item" id="item-<%= item._id %>"> <!-- 🔥 AJOUT ID -->
+        <div class="cart-item" id="item-<%= item._id %>">
 
           <img src="<%= item.image %>" class="cart-img">
 
@@ -29,7 +28,6 @@
           <div class="cart-qty">
             <button onclick="updateCart('/cart/increase/<%= item._id %>', '<%= item._id %>')">+</button>
 
-            <!-- 🔥 AJOUT QUANTITÉ -->
             <span id="qty-<%= item._id %>"><%= item.quantity %></span>
 
             <button onclick="updateCart('/cart/decrease/<%= item._id %>','<%= item._id %>')">−</button>
@@ -50,9 +48,9 @@
       Total: <%= total %>$
     </div>
 
- <button type="button" class="checkout-btn" onclick="payWithStripe()">
-  Passer la commande
-</button>
+    <button type="button" class="checkout-btn" onclick="payWithStripe()">
+      Passer la commande
+    </button>
 
   <% } %>
 </div>
