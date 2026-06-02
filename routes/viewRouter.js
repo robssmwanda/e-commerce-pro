@@ -6,6 +6,7 @@ const authController = require('./../controllers/authController');
 const cartController = require('./../controllers/cartController');
 const Cart = require('../models/Cart');
 const Order = require('../models/Order');
+const Product = require('../models/Product'); // 🔥 SÉCURITÉ : Importation essentielle du modèle Product
 const upload = require('../utils/multer')
 
 const {
@@ -26,34 +27,51 @@ router.get(
    viewController.getBuyPage
 );
 
-// router.get('/success', (req, res) => {
-//    console.log("SUCCESS ROUTE HIT");
-//    res.render('success', {
-//       title: 'Paiement reussie'
-//    });
-// });
-
-
+// SÉCURITÉ SERVEUR MAXIMALE : Traitement de la commande, vérification et décrémentation des stocks
 router.get('/success', async (req, res) => {
    try {
-      console.log("🔥 PAGE SUCCESS : Tentative d'enregistrement de la commande...");
+      console.log("🔥 PAGE SUCCESS : Tentative d'enregistrement de la commande et validation des stocks...");
       
-      // Récupération de l'utilisateur connecté
       const userId = req.user?._id || req.session?.userId;
       
       if (userId) {
-         // 1. Trouver le panier actuel de l'utilisateur AVANT de le vider
          const cart = await Cart.findOne({ user: userId });
          
          if (cart && cart.items.length > 0) {
             
-            // 2. Transférer TOUTES les données du panier (y compris l'image !) vers les items de la commande
+            // 1. SÉCURITÉ : On vérifie d'abord TOUS les produits en BDD avant de modifier quoi que ce soit
+            for (const item of cart.items) {
+               // Recherche du produit par son ID (adapté selon votre modèle de panier : item.productId ou item.product)
+               const targetId = item.productId || item.product;
+               const currentProduct = await Product.findById(targetId);
+
+               // Si le produit n'existe plus ou si le stock en BDD est inférieur à la demande du panier
+               if (!currentProduct || currentProduct.stock < item.quantity) {
+                  console.log(`🚨 ÉCHEC SÉCURITÉ SERVEUR : Plus de stock pour ${item.name}. Stock disponible: ${currentProduct ? currentProduct.stock : 0}`);
+                  return res.status(400).render('error', {
+                     title: 'Erreur de stock',
+                     message: `Désolé, le produit ${item.name} n'est plus disponible en quantité suffisante pour valider votre commande.`
+                  });
+               }
+            }
+
+            // 2. MISE À JOUR DU STOCK : Si la boucle précédente a validé tous les articles, on décrémente
+            for (const item of cart.items) {
+               const targetId = item.productId || item.product;
+               await Product.findByIdAndUpdate(
+                  targetId,
+                  { $inc: { stock: -item.quantity } } // Décrémente proprement la quantité achetée en base de données
+               );
+               console.log(`📉 Stock mis à jour pour le produit : ${item.name}`);
+            }
+            
+            // 3. TRANSFERT DES DONNÉES DU PANIER VERS LA COMMANDE
             const orderItems = cart.items.map(item => ({
-               productId: item.productId,
+               productId: item.productId || item.product,
                name: item.name,
                price: item.price,
                quantity: item.quantity,
-               image: item.image // 🔥 ICI : L'image présente dans le panier est sauvegardée
+               image: item.image
             }));
 
             // Calcul du montant total
@@ -62,7 +80,7 @@ router.get('/success', async (req, res) => {
             // Récupération facultative de l'ID de session Stripe depuis l'URL
             const stripeSessionId = req.query.session_id || '';
 
-            // 3. Créer la commande en base de données avec les images
+            // 4. CRÉATION DE LA COMMANDE
             await Order.create({
                user: userId,
                items: orderItems,
@@ -70,9 +88,9 @@ router.get('/success', async (req, res) => {
                stripeSessionId: stripeSessionId,
                status: 'paid'
             });
-            console.log("✅ Commande enregistrée avec succès avec ses images !");
+            console.log("✅ Commande enregistrée avec succès avec ses images et stocks décrémentés !");
 
-            // 4. Vider le panier maintenant que la commande est sécurisée
+            // 5. VIDER LE PANIER
             cart.items = [];
             await cart.save();
             console.log("🧹 Panier vidé.");
@@ -81,13 +99,15 @@ router.get('/success', async (req, res) => {
          }
       } else {
          console.log("❌ Impossible de créer la commande : Aucun utilisateur connecté trouvé.");
+         return res.status(401).send("Utilisateur non authentifié.");
       }
 
    } catch (err) {
       console.error("❌ Erreur lors du traitement sur la page success :", err.message);
+      return res.status(500).send("Erreur interne du serveur lors de la validation.");
    }
 
-   // Affichage de la page de succès e-commerce
+   // Affichage de la vue succès e-commerce si toutes les étapes précédentes ont réussi
    res.render('success', {
       title: 'Paiement réussi'
    });
