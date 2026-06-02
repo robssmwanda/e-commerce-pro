@@ -104,8 +104,11 @@ exports.getCartPage = async (req, res) => {
       cart = { items: [] };
     }
 
+    // 🔥 FIX : Extraction et transmission des messages Flash (Erreur de Stock) au template cart.ejs
     res.render('cart', {
-      cart: cart.items
+      cart: cart.items,
+      successMsg: req.flash('success'),
+      errorMsg: req.flash('error') 
     });
 
   } catch (err) {

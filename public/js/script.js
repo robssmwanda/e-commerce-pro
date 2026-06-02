@@ -4,13 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   // AFFICHAGE DU MESSAGE DE SUCCÈS APRÈS STRIPE
   // ==========================================
-  // Si on est sur la page de succès, on force le badge du panier à s'effacer
-      if (window.location.pathname === '/success') {
-        const badge = document.querySelector('.cart-count');
-        if (badge) badge.style.display = 'none';
-      }
-
-  // L'accolade fermante incorrecte a été supprimée ici 🛠️
+  if (window.location.pathname === '/success') {
+    const badge = document.querySelector('.cart-count');
+    if (badge) badge.style.display = 'none';
+  }
 
   let updatingCart = false;
 
@@ -185,11 +182,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-}); // ✅ L'écouteur global DOMContentLoaded se ferme correctement ici maintenant
+});
 
 // ==========================================
 // FONCTIONS GLOBALES (ACCESSIBLES VIA WINDOW)
 // ==========================================
+
+// 🔥 AJOUT : Gestion dynamique des boutons + et - avec alerte de stock
+window.updateCart = async function (url, itemId) {
+  try {
+    const errorContainer = document.getElementById('stock-error-container');
+    const errorText = document.getElementById('stock-error-text');
+
+    // On effectue la requête Fetch (POST ou GET selon vos fichiers de routes)
+    const res = await fetch(url, { method: 'POST' });
+    const data = await res.json();
+
+    // Si le serveur bloque l'ajout (Statut 400 renvoyé par cartController)
+    if (!res.ok) {
+      if (errorContainer && errorText) {
+        errorText.innerText = data.message || "Limite de stock atteinte.";
+        errorContainer.style.display = 'block'; // Rend visible le bloc orange d'avertissement
+      }
+      return;
+    }
+
+    // Si la modification est acceptée, on s'assure de masquer une ancienne alerte
+    if (errorContainer) errorContainer.style.display = 'none';
+
+    // Mise à jour de la quantité sur la ligne du produit spécifique
+    const qtyEl = document.querySelector(`#qty-${itemId}`);
+    if (qtyEl && data.newItemQty !== undefined) {
+      qtyEl.textContent = data.newItemQty;
+    }
+
+    // Mise à jour instantanée du montant total global du panier
+    const totalEl = document.querySelector('#cart-total');
+    if (totalEl && data.total !== undefined) {
+      totalEl.textContent = `Total: ${data.total}$`;
+    }
+
+  } catch (err) {
+    console.error("Erreur lors de la modification de quantité :", err);
+  }
+};
+
 window.confirmDelete = async function (url, itemId) {
   const confirmAction = confirm("Voulez-vous supprimer cet élément ?");
   if (!confirmAction) return;
@@ -206,6 +243,10 @@ window.confirmDelete = async function (url, itemId) {
       if (totalEl) {
         totalEl.textContent = `Total: ${data.total}$`;
       }
+      
+      // Cache le bandeau d'erreur si l'article problématique est supprimé
+      const errorContainer = document.getElementById('stock-error-container');
+      if (errorContainer) errorContainer.style.display = 'none';
     }
   } catch (err) {
     console.error(err);
@@ -222,21 +263,19 @@ window.payWithStripe = async function () {
       checkoutBtn.disabled = true;
     }
 
-    // ✅ CORRECTION : Requête POST sur l'URL exacte du routeur backend
     const res = await fetch('/create-checkout-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include' // Indispensable pour transmettre la session utilisateur sur Render
+      credentials: 'include'
     });
 
     const data = await res.json();
     console.log("💳 Réponse reçue du serveur backend :", data);
 
-    // ✅ Traitement direct de la réponse
     if (data.status === 'success' && data.url) {
-      window.location.assign(data.url); // 🚀 Redirection instantanée vers Stripe !
+      window.location.assign(data.url);
     } else {
       alert(data.message || 'Erreur lors de la création de la session Stripe.');
       if (checkoutBtn) {

@@ -149,11 +149,12 @@ exports.increaseQuantity = async (req, res) => {
       // 🔥 SÉCURITÉ : On va chercher le produit d'origine pour contrôler son stock
       const product = await Product.findById(item.productId);
       
+      // Dans cartController.js -> increaseQuantity
       if (!product || item.quantity + 1 > product.stock) {
-        console.log(`🚨 Blocage quantité panier : Limite de stock atteinte (${product ? product.stock : 0})`);
-        // Redirige vers le panier avec un paramètre d'erreur pour notifier le client
-        return res.redirect('/cart?error=stock_limit');
+        req.flash('error', "Désolé, ce produit n'est plus disponible en quantité supérieure.");
+        return res.redirect('/cart');
       }
+
       
       item.quantity += 1;
       await cart.save();
