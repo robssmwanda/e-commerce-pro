@@ -23,6 +23,9 @@ app.post(
 );
 
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
 
 // 2. Configuration du Limiter de requêtes
 const limiter = rateLimit({
@@ -106,8 +109,6 @@ app.use(async (req, res, next) => {
 });
 
 // 6. Middlewares de parsing et fichiers statiques
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
 app.use(expressLayouts);
 app.set('layout', 'layouts/main'); 

@@ -1,19 +1,19 @@
-const dotenv = require('dotenv')
-dotenv.config({path: './config.env'})
+const dotenv = require('dotenv');
+dotenv.config({ path: './config.env' });
 const mongoose = require('mongoose');
-const Product = require('./models/Product');
 
-const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD)
+// 1. Assurez-vous que l'import est exact (pas d'accolades)
+const Product = require('./models/Product'); 
 
+const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSWORD);
 
 const importData = async () => {
   try {
     await mongoose.connect(DB);
-    
     console.log('Connexion DB réussie ✅');
 
-    // ⚠️ Nettoyage (optionnel mais recommandé)
-    await Product.deleteMany();
+    // 2. L'appel doit obligatoirement être préfixé par le modèle "Product"
+    await Product.deleteMany({}); 
 
     // 🔥 Import multiple
     await Product.create([
@@ -22,6 +22,7 @@ const importData = async () => {
         order: 1,
         tagline: "Puissance. Élégance.",
         price: 899,
+        stock: 50,
         imgUrl: "/img/iPhone_2/iphone_17pro__.jpg",
         imgBuyUrl: "/img/buy/iphone-17-pro-finish-select-cosmicorange-202509_AV2.jpeg" ,
         category: "iphone",
@@ -33,6 +34,7 @@ const importData = async () => {
         order: 2,
         tagline: "Design réinventé",
         price: 1329,
+        stock: 30,
         imgUrl: "/img/iPhone_2/iphone_air__b5qmgl05ojyq_large_2x.jpg",
         imgBuyUrl: "/img/buy/iphone-air-finish-select-skyblue-202509_AV2.jpeg",
         category: "iphone",
@@ -44,6 +46,7 @@ const importData = async () => {
         order: 3,
         tagline: "Le plus puissant",
         price: 1499,
+        stock: 25,
         imgUrl: "/img/iPhone_2/iphone_17__fb1277oq3eaa_large_2x.jpg",
         imgBuyUrl: "/img/buy/iphone-17-finish-select-lavender-202509_AV2.jpeg",
         category: "iphone",
@@ -55,6 +58,7 @@ const importData = async () => {
         order: 4,
         tagline: "Le plus puissant",
         price: 1499,
+        stock: 40,
         imgUrl: "/img/iPhone_2/iphone_17e__cq5ygzct314y_large_2x.jpg",
         imgBuyUrl: "/img/buy/iphone-17e-finish-select-softpink-202603_AV2.jpeg",
         category: "iphone",
@@ -66,6 +70,7 @@ const importData = async () => {
         order: 5,
         tagline: "Le plus puissant",
         price: 1499,
+        stock: 15,
         imgUrl: "/img/iPhone_2/iphone_16__b6tkv86m2gc2_large_2x.jpg",
         imgBuyUrl: "/img/buy/iphone-16-ultramarine-select-202409_AV2.jpeg",
         category: "iphone",
@@ -83,4 +88,5 @@ const importData = async () => {
   }
 };
 
-importData()
+// 3. Assurez-vous d'appeler la fonction globale ici, et non deleteMany() tout seul
+importData();
