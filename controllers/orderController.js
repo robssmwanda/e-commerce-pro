@@ -1,6 +1,6 @@
 const Order = require('../models/Order')
 const Cart = require('../models/Cart')
-const Product = require('../models/Product') // 1. On importe le modèle Product
+const Product = require('../models/Product')
 
 exports.getMyOrders = async (req, res) => {
   try {
@@ -38,38 +38,51 @@ exports.getOrderDetails = async (req, res) => {
 };
 
 
-exports.createOrderAfterPayment = async (req, res) => { // 2. Ajout de async
+exports.createOrderAfterPayment = async (req, res) => {
   try {
     console.log("✅ SUCCESS PAGE - Traitement de la commande et du stock");
 
-    // 3. Récupérer le panier de l'utilisateur connecté
-    const cart = await Cart.findOne({ user: req.user._id });
+    // 1. Récupérer le panier et charger les détails des produits (populate)
+    const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
 
     if (!cart || cart.items.length === 0) {
-      return res.redirect('/cart'); // Évite de valider un panier vide
+      return res.redirect('/cart');
     }
 
-    // 4. Parcourir les articles du panier pour réduire le stock de chaque produit
+    // 2. DOUBLE SÉCURITÉ SERVEUR : Vérifier si les stocks sont suffisants avant de valider
+    for (const item of cart.items) {
+      const productObj = item.product;
+      
+      if (!productObj || productObj.stock < item.quantity) {
+        console.log(`🚨 Tentative d'achat frauduleuse ou rupture de stock sur : ${productObj ? productObj.name : 'Produit inconnu'}`);
+        // On bloque l'action et on informe l'utilisateur
+        return res.status(400).send(`Désolé, le produit ${productObj ? productObj.name : ''} n'a plus assez de stock.`);
+      }
+    }
+
+    // 3. Si tout est OK, on décrémente les stocks de manière sécurisée
     for (const item of cart.items) {
       await Product.findByIdAndUpdate(
-        item.product, // L'identifiant du produit
-        { $inc: { stock: -item.quantity } } // Décrémente le stock de la quantité achetée
+        item.product._id,
+        { $inc: { stock: -item.quantity } }
       );
     }
 
-    // 5. [Optionnel] Créer le document Order dans la base de données ici
-    /*
+    // 4. [Recommandé] Activer la création de la commande en base de données
     await Order.create({
       user: req.user._id,
-      items: cart.items,
+      items: cart.items.map(item => ({
+        product: item.product._id,
+        quantity: item.quantity,
+        price: item.product.price
+      })),
       totalPrice: cart.totalPrice
     });
-    */
 
-    // 6. Vider le panier de l'utilisateur après l'achat réussi
+    // 5. Vider le panier de l'utilisateur après l'achat réussi
     await Cart.findOneAndDelete({ user: req.user._id });
 
-    // 7. Affichage de la vue succès
+    // 6. Affichage de la vue succès
     res.render('success', {
       title: 'Paiement réussi'
     });
