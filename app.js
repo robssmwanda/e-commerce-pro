@@ -26,6 +26,10 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// Indispensable sur Render pour que l'authentification (req.user / protect) fonctionne en AJAX
+app.set('trust proxy', 1); 
+
+
 
 // 2. Configuration du Limiter de requêtes
 const limiter = rateLimit({

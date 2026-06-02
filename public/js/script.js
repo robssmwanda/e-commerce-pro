@@ -194,38 +194,53 @@ window.updateCart = async function (url, itemId) {
     const errorContainer = document.getElementById('stock-error-container');
     const errorText = document.getElementById('stock-error-text');
 
-    // On effectue la requête Fetch (POST ou GET selon vos fichiers de routes)
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(url, { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    // SÉCURITÉ REDIRECTION : Si le middleware 'protect' redirige vers /sign-in
+    if (res.redirected) {
+      window.location.href = res.url;
+      return;
+    }
+
+    // Vérification de la nature de la réponse (Doit être du JSON, pas du HTML)
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.log("Le serveur a renvoyé une page HTML au lieu de JSON (Session expirée ou erreur serveur).");
+      window.location.reload(); // Recharge la page pour afficher l'état réel (Ex: redirection de connexion)
+      return;
+    }
+
     const data = await res.json();
 
-    // Si le serveur bloque l'ajout (Statut 400 renvoyé par cartController)
+    // Si le serveur bloque l'ajout (Statut 400 - Plus de stock)
     if (!res.ok) {
       if (errorContainer && errorText) {
-        errorText.innerText = data.message || "Limite de stock atteinte.";
-        errorContainer.style.display = 'block'; // Rend visible le bloc orange d'avertissement
+        errorText.innerText = data.message || "Limite de stock de la base de données atteinte.";
+        errorContainer.style.display = 'block';
       }
       return;
     }
 
-    // Si la modification est acceptée, on s'assure de masquer une ancienne alerte
     if (errorContainer) errorContainer.style.display = 'none';
 
-    // Mise à jour de la quantité sur la ligne du produit spécifique
-    const qtyEl = document.querySelector(`#qty-${itemId}`);
+    const qtyEl = document.getElementById(`qty-${itemId}`);
     if (qtyEl && data.newItemQty !== undefined) {
       qtyEl.textContent = data.newItemQty;
     }
 
-    // Mise à jour instantanée du montant total global du panier
     const totalEl = document.querySelector('#cart-total');
     if (totalEl && data.total !== undefined) {
       totalEl.textContent = `Total: ${data.total}$`;
     }
 
   } catch (err) {
-    console.error("Erreur lors de la modification de quantité :", err);
+    console.error("Erreur interceptée :", err);
   }
 };
+
 
 window.confirmDelete = async function (url, itemId) {
   const confirmAction = confirm("Voulez-vous supprimer cet élément ?");
