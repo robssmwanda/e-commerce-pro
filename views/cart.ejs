@@ -26,16 +26,18 @@
           </div>
 
           <div class="cart-qty">
-            <button onclick="updateCart('/cart/increase/<%= item._id %>', '<%= item._id %>')">+</button>
+            <!-- 🔥 FIX : On envoie item.productId pour le serveur, et item._id pour le script visuel -->
+            <button onclick="updateCart('/cart/increase/<%= item.productId %>', '<%= item._id %>')">+</button>
 
             <span id="qty-<%= item._id %>"><%= item.quantity %></span>
 
-            <button onclick="updateCart('/cart/decrease/<%= item._id %>','<%= item._id %>')">−</button>
+            <button onclick="updateCart('/cart/decrease/<%= item.productId %>','<%= item._id %>')">−</button>
 
-            <button onclick="confirmDelete('/cart/remove/<%= item._id %>','<%= item._id %>')">
+            <button onclick="confirmDelete('/cart/remove/<%= item.productId %>','<%= item._id %>')">
               Supprimer
             </button>
           </div>
+
 
         </div>
 
