@@ -65,7 +65,7 @@
 
             <div class="product-info">
               <!-- Gestion visuelle sécurisée du stock -->
-              <% if (typeof product.stock !== 'undefined' && product.stock > 10) { %>
+              <% if (typeof product.stock !== 'undefined' && product.stock >= 10) { %>
                 <span class="badge-stock in-stock">En stock</span>
               <% } else if (typeof product.stock !== 'undefined' && product.stock > 0 && product.stock <= 10) { %>
                 <span class="badge-stock low-stock"><%= product.stock %></span>
