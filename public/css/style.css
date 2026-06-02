@@ -1839,28 +1839,65 @@ li a {
    transform: translateY(-1px);
 }
 
-.badge-storage {
-    display: inline-block;
-    background-color: #f5f5f7;
-    color: #1d1d1f;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* Structure de la zone info pour un alignement propre */
-  .product-info {
+.product-info {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-top: 15px;
+    padding: 20px 15px;
   }
 
+  /* Style général des badges de quantité en stock */
+  .badge-stock {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-bottom: 14px; /* Espace crucial pour dégager le nom du produit */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* État disponible : Vert style Apple */
+  .badge-stock.in-stock {
+    background-color: #e6f4ea;
+    color: #137333;
+  }
+
+  /* État épuisé : Rouge style Apple */
+  .badge-stock.out-of-stock {
+    background-color: #fce8e6;
+    color: #c5221f;
+  }
+
+  /* Correction du titre du produit */
   .product-name {
-    margin-top: 5px;
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1d1d1f;
+    line-height: 1.2;
+  }
+
+  /* Correction de la description */
+  .product-tagline {
+    font-size: 14px;
+    color: #1d1d1f;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  /* Prix du produit */
+  .product-price {
+    font-size: 14px;
+    color: #1d1d1f;
+    margin-bottom: 20px;
+  }
+
+  /* Actions de bas de carte */
+  .product-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
   }

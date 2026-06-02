@@ -64,8 +64,12 @@
             </div>
 
             <div class="product-info">
-              <!-- Badge Stockage -->
-              <span class="badge-storage"><%= product.storage || '128 Go' %></span>
+              <!-- Gestion visuelle du stock de la base de données -->
+              <% if (product.stock > 0) { %>
+                <span class="badge-stock in-stock">En stock (<%= product.stock %>)</span>
+              <% } else { %>
+                <span class="badge-stock out-of-stock">Rupture de stock</span>
+              <% } %>
 
               <h3 class="product-name"><%= product.name %></h3>
 
@@ -80,9 +84,14 @@
               <div class="product-actions">
                 <button class="btn-blue">En savoir plus</button>
 
-                <a href="/buy/<%= product.slug || 'fallback' %>" class="link-buy">
-                  Acheter >
-                </a>
+                <!-- Désactivation optionnelle du lien d'achat si rupture de stock -->
+                <% if (product.stock > 0) { %>
+                  <a href="/buy/<%= product.slug || 'fallback' %>" class="link-buy">
+                    Acheter >
+                  </a>
+                <% } else { %>
+                  <span class="link-buy disabled" style="color: #86868b; cursor: not-allowed;">Indisponible</span>
+                <% } %>
               </div>
             </div>
 
