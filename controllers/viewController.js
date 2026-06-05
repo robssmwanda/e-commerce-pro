@@ -109,13 +109,14 @@ exports.getCartPage = async (req, res) => {
       cart: cart.items,
       successMsg: req.flash('success'),
       errorMsg: req.flash('error') 
-    }
+    }); // <-- La parenthèse ) a été ajoutée ici pour fermer le res.render
 
   } catch (err) {
     console.error("❌ CART PAGE ERROR:", err);
     res.status(500).send('Erreur serveur');
   }
 };
+
 
 
 exports.getProfilePage = async (req, res) => {
