@@ -68,7 +68,7 @@
               <% if (typeof product.stock !== 'undefined' && product.stock >= 10) { %>
                 <span class="badge-stock in-stock">En stock</span>
               <% } else if (typeof product.stock !== 'undefined' && product.stock > 0 && product.stock <= 10) { %>
-                <span class="badge-stock low-stock"><%= product.stock %></span>
+                <span class="badge-stock low-stock"><%= reste (product.stock) %></span>
               <% } else { %>
                 <span class="badge-stock out-of-stock">Rupture de stock</span>
               <% } %>
