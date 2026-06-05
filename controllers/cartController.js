@@ -140,31 +140,38 @@ exports.increaseQuantity = async (req, res) => {
     const productId = req.params.productId;
     const cart = await Cart.findOne({ user: req.user._id });
 
-    // Trouver l'item ciblé dans le panier
     const item = cart.items.find(
-      item => item._id.toString() === productId
+      item => item._id.toString() === productId || item.productId.toString() === productId
     );
 
     if (item) {
-      // 🔥 SÉCURITÉ : On va chercher le produit d'origine pour contrôler son stock
       const product = await Product.findById(item.productId);
       
-      // Dans cartController.js -> increaseQuantity
       if (!product || item.quantity + 1 > product.stock) {
-        req.flash('error', "Désolé, ce produit n'est plus disponible en quantité supérieure.");
-        return res.redirect('/cart');
+        return res.status(400).json({
+          status: 'fail',
+          message: `Désolé, la limite de stock (${product ? product.stock : 0}) est atteinte.`
+        });
       }
-
       
       item.quantity += 1;
       await cart.save();
+
+      const total = cart.items.reduce((acc, i) => acc + i.price * i.quantity, 0);
+
+      // 🔥 On renvoie la nouvelle quantité de cet item précis
+      return res.json({
+        status: 'success',
+        newItemQty: item.quantity,
+        total: total
+      });
     }
 
-    res.redirect('/cart');
+    res.status(404).json({ status: 'fail', message: 'Article introuvable' });
 
   } catch (err) {
-    console.log(err);
-    res.status(500).send('Erreur');
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Erreur serveur' });
   }
 };
 
@@ -174,32 +181,35 @@ exports.decreaseQuantity = async (req, res) => {
     const cart = await Cart.findOne({ user: req.user._id });
 
     const item = cart.items.find(
-      item => item._id.toString() === productId
+      item => item._id.toString() === productId || item.productId.toString() === productId
     );
+
+    let newItemQty = 0;
 
     if (item) {
       item.quantity -= 1;
+      newItemQty = item.quantity;
 
       if (item.quantity <= 0) {
         cart.items = cart.items.filter(
-          item => item._id.toString() !== productId
+          i => i._id.toString() !== item._id.toString()
         );
+        newItemQty = 0;
       }
+      await cart.save();
     }
 
-    await cart.save();
+    const total = cart.items.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
-    const total = cart.items.reduce((acc, item) => {
-      return acc + item.price * item.quantity;
-    }, 0);
-
+    // 🔥 On renvoie également la quantité ici
     res.json({
       status: 'success',
+      newItemQty: newItemQty,
       total: total
     });
 
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ status: 'error' });
   }
 };

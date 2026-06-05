@@ -91,28 +91,47 @@ exports.manageAccount = async (req, res) => {
    }
 }
 
-exports.getCartPage = async (req, res) => {
+exports.getCart = async (req, res) => {
   try {
     if (!req.user) {
-      return res.redirect('/sign-in');
+      req.flash('error', 'Vous devez être connecté pour voir votre panier.');
+      return res.redirect('/login');
     }
 
-    // 🔥 CORRECTION : On utilise le nom exact de votre champ : 'items.produit'
-    let cart = await Cart.findOne({ user: req.user._id }).populate('items.produit');
+    // Récupérer le panier de l'utilisateur et joindre les infos du produit (dont le stock)
+    const cart = await Cart.findOne({ user: req.user._id }).populate({
+      path: 'items.productId',
+      select: 'stock' 
+    });
 
-    if (!cart) {
-      cart = { items: [] };
-    }
+    // Formater les éléments pour injecter proprement le stock
+    const cartItems = cart ? cart.items.map(item => {
+      return {
+        _id: item._id,
+        productId: item.productId ? item.productId._id : null,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        quantity: item.quantity,
+        stock: item.productId ? item.productId.stock : 0 // 🔥 Le stock est disponible ici
+      };
+    }) : [];
 
-    res.render('cart', {
-      cart: cart.items,
+    // Calculer le total du panier pour l'affichage
+    const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+    // 🔥 RENDER de la page du panier (Assurez-vous que votre fichier s'appelle 'cart' ou 'cart-page')
+    res.status(200).render('cart', {
+      title: 'Mon Panier - Apple (FR)',
+      cart: cartItems,
+      totalAmount,
       successMsg: req.flash('success'),
-      errorMsg: req.flash('error') 
+      errorMsg: req.flash('error')
     });
 
   } catch (err) {
-    console.error("❌ CART PAGE ERROR:", err);
-    res.status(500).send('Erreur serveur');
+    console.error('Erreur getCart:', err);
+    res.status(500).send('Erreur serveur lors du chargement du panier');
   }
 };
 

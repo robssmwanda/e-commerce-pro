@@ -189,48 +189,78 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 
 // 🔥 AJOUT : Gestion dynamique des boutons + et - avec alerte de stock
+// 🔥 LOGIQUE MISE À JOUR : Contrôle dynamique des boutons + et - selon le stock réel
 window.updateCart = async function (url, itemId) {
   try {
     const errorContainer = document.getElementById('stock-error-container');
     const errorText = document.getElementById('stock-error-text');
+    const btnInc = document.getElementById(`btn-inc-${itemId}`);
 
     const res = await fetch(url, { 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
 
-    // SÉCURITÉ REDIRECTION : Si le middleware 'protect' redirige vers /sign-in
     if (res.redirected) {
       window.location.href = res.url;
       return;
     }
 
-    // Vérification de la nature de la réponse (Doit être du JSON, pas du HTML)
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      console.log("Le serveur a renvoyé une page HTML au lieu de JSON (Session expirée ou erreur serveur).");
-      window.location.reload(); // Recharge la page pour afficher l'état réel (Ex: redirection de connexion)
+      console.log("Le serveur a renvoyé une page HTML au lieu de JSON.");
+      window.location.reload();
       return;
     }
 
     const data = await res.json();
 
-    // Si le serveur bloque l'ajout (Statut 400 - Plus de stock)
+    // Si le serveur bloque l'augmentation (Statut 400 - Stock épuisé)
     if (!res.ok) {
       if (errorContainer && errorText) {
-        errorText.innerText = data.message || "Limite de stock de la base de données atteinte.";
+        errorText.innerText = data.message || "Limite de stock atteinte.";
         errorContainer.style.display = 'block';
+      }
+      // On force la désactivation locale par sécurité
+      if (btnInc) {
+        btnInc.disabled = true;
+        btnInc.style.cursor = 'not-allowed';
+        btnInc.style.opacity = '0.5';
       }
       return;
     }
 
     if (errorContainer) errorContainer.style.display = 'none';
 
+    // 1. Mise à jour de la quantité affichée à l'écran
     const qtyEl = document.getElementById(`qty-${itemId}`);
     if (qtyEl && data.newItemQty !== undefined) {
       qtyEl.textContent = data.newItemQty;
+
+      // Si l'article est tombé à 0 suite à une diminution, on supprime la ligne du DOM
+      if (data.newItemQty === 0) {
+        const itemEl = document.querySelector(`#item-${itemId}`);
+        if (itemEl) itemEl.remove();
+      }
     }
 
+    // 2. Vérification dynamique du stock pour activer/désactiver le bouton "+"
+    if (btnInc && data.newItemQty !== undefined) {
+      const maxStock = parseInt(btnInc.getAttribute('data-stock'), 10) || 0;
+
+      if (data.newItemQty >= maxStock) {
+        btnInc.disabled = true;
+        btnInc.style.cursor = 'not-allowed';
+        btnInc.style.opacity = '0.5';
+      } else {
+        // Si on a diminué la quantité en dessous du stock, on réactive le bouton
+        btnInc.disabled = false;
+        btnInc.style.cursor = '';
+        btnInc.style.opacity = '';
+      }
+    }
+
+    // 3. Mise à jour du prix total affiché
     const totalEl = document.querySelector('#cart-total');
     if (totalEl && data.total !== undefined) {
       totalEl.textContent = `Total: ${data.total}$`;
@@ -240,7 +270,6 @@ window.updateCart = async function (url, itemId) {
     console.error("Erreur interceptée :", err);
   }
 };
-
 
 window.confirmDelete = async function (url, itemId) {
   const confirmAction = confirm("Voulez-vous supprimer cet élément ?");

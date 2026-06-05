@@ -1,7 +1,7 @@
 <div class="cart-container">
   <h1>Mon Panier</h1>
 
-  <!-- Zone d'alerte universelle (Gère le Flash au chargement ET le JavaScript dynamique) -->
+  <!-- Zone d'alerte universelle -->
   <div id="stock-error-container" 
        style="<% if (typeof errorMsg !== 'undefined' && errorMsg.length > 0) { %> display: block; <% } else { %> display: none; <% } %> background-color: #fff3e0; color: #e65100; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 14px;">
     ⚠️ <span id="stock-error-text"><%= (typeof errorMsg !== 'undefined' && errorMsg.length > 0) ? errorMsg : '' %></span>
@@ -16,10 +16,10 @@
 
       <% cart.forEach(item => { %>
 
-        <!-- 🔥 Extraction sécurisée de l'ID du produit et de son stock réel (via 'produit') -->
+        <!-- 🔥 Extraction corrigée basée sur les propriétés de l'item reformaté -->
         <% 
-          const pId = item.produit && item.produit._id ? item.produit._id : item.produit;
-          const maxStock = item.produit && typeof item.produit.stock !== 'undefined' ? item.produit.stock : 999;
+          const pId = item.productId;
+          const maxStock = typeof item.stock !== 'undefined' ? item.stock : 0;
         %>
 
         <div class="cart-item" id="item-<%= item._id %>">
@@ -32,9 +32,10 @@
           </div>
 
           <div class="cart-qty">
-            <!-- 🔥 FIX : Le bouton + se désactive automatiquement si la quantité atteint le stock -->
+            <!-- Stock maximum stocké dans un attribut data-stock pour le JavaScript -->
             <button 
               id="btn-inc-<%= item._id %>"
+              data-stock="<%= maxStock %>"
               onclick="updateCart('/cart/increase/<%= pId %>', '<%= item._id %>')"
               <%= item.quantity >= maxStock ? 'disabled' : '' %>
               style="<%= item.quantity >= maxStock ? 'cursor: not-allowed; opacity: 0.5;' : '' %>"
