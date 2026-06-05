@@ -98,24 +98,25 @@ exports.getCart = async (req, res) => {
       return res.redirect('/login');
     }
 
-    // 1. Récupérer le panier brut de l'utilisateur
     const cart = await Cart.findOne({ user: req.user._id });
     const cartItems = [];
 
     if (cart && cart.items.length > 0) {
-      // 2. Pour chaque item, on va chercher les informations fraîches et réelles du produit en BDD
       for (const item of cart.items) {
-        if (item.produit) {
-          const freshProduct = await Product.findById(item.produit);
+        // 🔥 Détection universelle de l'ID du produit (gère toutes les variantes de votre historique de code)
+        const targetProductId = item.produit || item.productId || item.product;
+
+        if (targetProductId) {
+          const freshProduct = await Product.findById(targetProductId);
           
           cartItems.push({
             _id: item._id,
-            productId: item.produit,
+            productId: targetProductId, // Assure la compatibilité avec le script de mise à jour
             name: item.name,
             price: item.price,
             image: item.image,
             quantity: item.quantity,
-            // 🔥 On prend le stock directement depuis la collection Product en BDD
+            // Récupération sécurisée du stock frais
             stock: freshProduct ? freshProduct.stock : 0 
           });
         }
@@ -124,10 +125,10 @@ exports.getCart = async (req, res) => {
 
     const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-    // Contrôle rapide dans votre terminal Render pour voir la valeur exacte
-    console.log("--- DEBUG PANIER ---");
+    // Logs de contrôle pour traquer la valeur lue en direct dans votre console Render
+    console.log("=== VÉRIFICATION SÉCURISÉE DES STOCKS ===");
     cartItems.forEach(i => {
-      console.log(`Produit: ${i.name} | Quantité Panier: ${i.quantity} | Stock Réel BDD: ${i.stock}`);
+      console.log(`Article: ${i.name} | Quantité choisie: ${i.quantity} | Stock disponible BDD: ${i.stock}`);
     });
 
     res.status(200).render('cart', {
