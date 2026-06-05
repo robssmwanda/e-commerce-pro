@@ -98,29 +98,26 @@ exports.getCart = async (req, res) => {
       return res.redirect('/login');
     }
 
-    // Récupérer le panier de l'utilisateur et joindre les infos du produit (dont le stock)
+    // 🔥 On utilise 'items.produit' à la place de 'items.productId'
     const cart = await Cart.findOne({ user: req.user._id }).populate({
-      path: 'items.productId',
+      path: 'items.produit',
       select: 'stock' 
     });
 
-    // Formater les éléments pour injecter proprement le stock
     const cartItems = cart ? cart.items.map(item => {
       return {
         _id: item._id,
-        productId: item.productId ? item.productId._id : null,
+        productId: item.produit ? item.produit._id : null, // Maintient la compatibilité frontend
         name: item.name,
         price: item.price,
         image: item.image,
         quantity: item.quantity,
-        stock: item.productId ? item.productId.stock : 0 // 🔥 Le stock est disponible ici
+        stock: item.produit ? item.produit.stock : 0 
       };
     }) : [];
 
-    // Calculer le total du panier pour l'affichage
     const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-    // 🔥 RENDER de la page du panier (Assurez-vous que votre fichier s'appelle 'cart' ou 'cart-page')
     res.status(200).render('cart', {
       title: 'Mon Panier - Apple (FR)',
       cart: cartItems,
@@ -134,6 +131,7 @@ exports.getCart = async (req, res) => {
     res.status(500).send('Erreur serveur lors du chargement du panier');
   }
 };
+
 
 
 exports.getProfilePage = async (req, res) => {
