@@ -199,11 +199,13 @@ router.get(
    viewController.getSignupForm
 );
 
+// 🔥 Remplacer viewController.getCartPage par viewController.getCart
 router.get(
    '/cart-page',
    protect,
-   viewController.getCartPage
+   viewController.getCart
 );
+
 
 router.post('/signup', authController.createUser);
 
