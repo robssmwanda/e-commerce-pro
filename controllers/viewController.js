@@ -93,13 +93,12 @@ exports.manageAccount = async (req, res) => {
 
 exports.getCartPage = async (req, res) => {
   try {
-
     if (!req.user) {
       return res.redirect('/sign-in');
     }
 
-    // 🔥 FIX : On ajoute .populate('items.productId') pour charger les détails du produit (comme le stock)
-    let cart = await Cart.findOne({ user: req.user._id }).populate('items.productId');
+    // 🔥 CORRECTION : On utilise le nom exact de votre champ : 'items.produit'
+    let cart = await Cart.findOne({ user: req.user._id }).populate('items.produit');
 
     if (!cart) {
       cart = { items: [] };
@@ -109,14 +108,13 @@ exports.getCartPage = async (req, res) => {
       cart: cart.items,
       successMsg: req.flash('success'),
       errorMsg: req.flash('error') 
-    }); // <-- La parenthèse ) a été ajoutée ici pour fermer le res.render
+    });
 
   } catch (err) {
     console.error("❌ CART PAGE ERROR:", err);
     res.status(500).send('Erreur serveur');
   }
 };
-
 
 
 exports.getProfilePage = async (req, res) => {
