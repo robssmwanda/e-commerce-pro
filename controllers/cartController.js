@@ -144,18 +144,32 @@ exports.increaseQuantity = async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Panier introuvable' });
     }
 
-    // 🔥 CORRECTION : On cherche en utilisant 'item.produit' (qui correspond à votre schéma Cart)
-    const item = cart.items.find(
-      item => item._id.toString() === productId || (item.produit && item.produit.toString() === productId)
-    );
+    // 🔥 Détection ultra-sécurisée de l'élément dans le panier (gère toutes les clés historiques)
+    const item = cart.items.find(item => {
+      const targetId = item.produit || item.productId || item.product || item._id;
+      return item._id.toString() === productId || (targetId && targetId.toString() === productId);
+    });
 
     if (item) {
-      const product = await Product.findById(item.produit);
+      // Extraction de l'ID produit avec toutes les variantes possibles
+      const actualProductId = item.produit || item.productId || item.product;
       
-      if (!product || item.quantity + 1 > product.stock) {
+      if (!actualProductId) {
+        return res.status(400).json({ status: 'fail', message: "Impossible d'identifier le produit." });
+      }
+
+      // Récupération du stock frais depuis la collection Product
+      const product = await Product.findById(actualProductId);
+      
+      if (!product) {
+        return res.status(404).json({ status: 'fail', message: "Le produit n'existe pas en base de données." });
+      }
+
+      // Contrôle strict du stock
+      if (item.quantity + 1 > product.stock) {
         return res.status(400).json({
           status: 'fail',
-          message: `Désolé, la limite de stock (${product ? product.stock : 0}) est atteinte.`
+          message: `Désolé, la limite de stock (${product.stock}) est atteinte.`
         });
       }
       
@@ -164,20 +178,21 @@ exports.increaseQuantity = async (req, res) => {
 
       const total = cart.items.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
-      return res.json({
+      return res.status(200).json({
         status: 'success',
         newItemQty: item.quantity,
         total: total
       });
     }
 
-    res.status(404).json({ status: 'fail', message: 'Article introuvable dans le panier' });
+    return res.status(404).json({ status: 'fail', message: 'Article introuvable dans le panier' });
 
   } catch (err) {
     console.error('Erreur increaseQuantity:', err);
-    res.status(500).json({ status: 'error', message: 'Erreur serveur' });
+    return res.status(500).json({ status: 'error', message: 'Erreur interne du serveur' });
   }
 };
+
 
 exports.decreaseQuantity = async (req, res) => {
   try {
