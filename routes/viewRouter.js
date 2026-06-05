@@ -28,90 +28,101 @@ router.get(
 );
 
 // SÉCURITÉ SERVEUR MAXIMALE : Traitement de la commande, vérification et décrémentation des stocks
-router.get('/success', async (req, res) => {
+// =========================================================================
+// SÉCURITÉ SERVEUR MAXIMALE : Traitement de la commande et décrémentation des stocks
+// =========================================================================
+router.get('/success', protect, async (req, res) => {
    try {
-      console.log("🔥 PAGE SUCCESS : Tentative d'enregistrement de la commande et validation des stocks...");
+      console.log("🔥 PAGE SUCCESS : Enregistrement de la commande et validation des stocks...");
       
-      const userId = req.user?._id || req.session?.userId;
-      
-      if (userId) {
-         const cart = await Cart.findOne({ user: userId });
-         
-         if (cart && cart.items.length > 0) {
-            
-            // 1. SÉCURITÉ : On vérifie d'abord TOUS les produits en BDD avant de modifier quoi que ce soit
-            for (const item of cart.items) {
-               // Recherche du produit par son ID (adapté selon votre modèle de panier : item.productId ou item.product)
-               const targetId = item.productId || item.product;
-               const currentProduct = await Product.findById(targetId);
-
-               // Si le produit n'existe plus ou si le stock en BDD est inférieur à la demande du panier
-               if (!currentProduct || currentProduct.stock < item.quantity) {
-                  console.log(`🚨 ÉCHEC SÉCURITÉ SERVEUR : Plus de stock pour ${item.name}. Stock disponible: ${currentProduct ? currentProduct.stock : 0}`);
-                  return res.status(400).render('error', {
-                     title: 'Erreur de stock',
-                     message: `Désolé, le produit ${item.name} n'est plus disponible en quantité suffisante pour valider votre commande.`
-                  });
-               }
-            }
-
-            // 2. MISE À JOUR DU STOCK : Si la boucle précédente a validé tous les articles, on décrémente
-            for (const item of cart.items) {
-               const targetId = item.productId || item.product;
-               await Product.findByIdAndUpdate(
-                  targetId,
-                  { $inc: { stock: -item.quantity } } // Décrémente proprement la quantité achetée en base de données
-               );
-               console.log(`📉 Stock mis à jour pour le produit : ${item.name}`);
-            }
-            
-            // 3. TRANSFERT DES DONNÉES DU PANIER VERS LA COMMANDE
-            const orderItems = cart.items.map(item => ({
-               productId: item.productId || item.product,
-               name: item.name,
-               price: item.price,
-               quantity: item.quantity,
-               image: item.image
-            }));
-
-            // Calcul du montant total
-            const total = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-
-            // Récupération facultative de l'ID de session Stripe depuis l'URL
-            const stripeSessionId = req.query.session_id || '';
-
-            // 4. CRÉATION DE LA COMMANDE
-            await Order.create({
-               user: userId,
-               items: orderItems,
-               total: total,
-               stripeSessionId: stripeSessionId,
-               status: 'paid'
-            });
-            console.log("✅ Commande enregistrée avec succès avec ses images et stocks décrémentés !");
-
-            // 5. VIDER LE PANIER
-            cart.items = [];
-            await cart.save();
-            console.log("🧹 Panier vidé.");
-         } else {
-            console.log("⚠️ Panier déjà vide ou inexistant (Commande probablement déjà enregistrée).");
-         }
-      } else {
-         console.log("❌ Impossible de créer la commande : Aucun utilisateur connecté trouvé.");
+      const userId = req.user?._id;
+      if (!userId) {
+         console.log("❌ Impossible de créer la commande : Utilisateur non authentifié.");
          return res.status(401).send("Utilisateur non authentifié.");
       }
 
+      const cart = await Cart.findOne({ user: userId });
+      
+      if (cart && cart.items.length > 0) {
+         
+         // 1. SÉCURITÉ CONTRE LA CONCURRENCE : On vérifie TOUS les stocks avant de modifier quoi que ce soit
+         for (const item of cart.items) {
+            // Détection universelle de l'ID produit
+            const targetId = item.produit || item.productId || item.product;
+            let currentProduct = null;
+
+            if (targetId) {
+               currentProduct = await Product.findById(targetId);
+            }
+
+            // Secours par le nom du produit
+            if (!currentProduct && item.name) {
+               currentProduct = await Product.findOne({ name: item.name });
+            }
+
+            // Si le produit n'existe plus ou si le stock en BDD est insuffisant
+            if (!currentProduct || currentProduct.stock < item.quantity) {
+               console.log(`🚨 ÉCHEC SÉCURITÉ SERVEUR : Stock insuffisant pour ${item.name}.`);
+               return res.status(400).render('error', {
+                  title: 'Erreur de stock',
+                  message: `Désolé, le produit ${item.name} n'est plus disponible en quantité suffisante pour valider votre commande.`
+               });
+            }
+
+            // On attache temporairement l'ID BDD trouvé à l'item du panier pour l'étape suivante
+            item.realProductDbId = currentProduct._id;
+         }
+
+         // 2. MISE À JOUR DU STOCK : On décrémente le stock physique Int32 dans MongoDB
+         for (const item of cart.items) {
+            await Product.findByIdAndUpdate(
+               item.realProductDbId,
+               { $inc: { stock: -Number(item.quantity) } } // Décrémente proprement la quantité achetée
+            );
+            console.log(`📉 Stock mis à jour (-${item.quantity}) pour le produit : ${item.name}`);
+         }
+         
+         // 3. PRÉPARATION DU TRANSFERT VERS LA COLLECTION ORDERS
+         const orderItems = cart.items.map(item => ({
+            productId: item.realProductDbId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image
+         }));
+
+         const total = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+         const stripeSessionId = req.query.session_id || '';
+
+         // 4. CRÉATION DE LA COMMANDE EN BDD
+         await Order.create({
+            user: userId,
+            items: orderItems,
+            total: total,
+            stripeSessionId: stripeSessionId,
+            status: 'paid'
+         });
+         console.log("✅ Commande enregistrée avec succès !");
+
+         // 5. VIDER LE PANIER
+         cart.items = [];
+         await cart.save();
+         console.log("🧹 Panier utilisateur vidé.");
+      } else {
+         console.log("⚠️ Panier déjà vide (Commande probablement déjà traitée lors d'un rechargement).");
+      }
+
+      // Affichage de la page de confirmation de paiement Apple
+      res.render('success', {
+         title: 'Paiement réussi'
+      });
+
    } catch (err) {
-      console.error("❌ Erreur lors du traitement sur la page success :", err.message);
+      console.error("❌ Erreur critique sur la page success :", err.message);
       return res.status(500).send("Erreur interne du serveur lors de la validation.");
    }
-
-   // Affichage de la vue succès e-commerce si toutes les étapes précédentes ont réussi
-   res.render('success', {
-      title: 'Paiement réussi'
-   });
 });
+
 
 router.get('/check-email', (req, res) => {
 
