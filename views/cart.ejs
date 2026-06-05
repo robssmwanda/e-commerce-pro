@@ -1,36 +1,68 @@
-<% cart.forEach(item => { %>
+<div class="cart-container">
+  <h1>Mon Panier</h1>
 
-  <!-- 🔥 CORRECTION : On utilise item.produit (votre modèle) à la place de item.productId -->
-  <% 
-    const pId = item.produit && item.produit._id ? item.produit._id : item.produit;
-    const maxStock = item.produit && typeof item.produit.stock !== 'undefined' ? item.produit.stock : 999;
-  %>
-
-  <div class="cart-item" id="item-<%= item._id %>">
-    <img src="<%= item.image %>" class="cart-img">
-
-    <div class="cart-details">
-      <h3><%= item.name %></h3>
-      <p class="price"><%= item.price %>$</p>
-    </div>
-
-    <div class="cart-qty">
-      <button 
-        id="btn-inc-<%= item._id %>"
-        onclick="updateCart('/cart/increase/<%= pId %>', '<%= item._id %>')"
-        <%= item.quantity >= maxStock ? 'disabled' : '' %>
-        style="<%= item.quantity >= maxStock ? 'cursor: not-allowed; opacity: 0.5;' : '' %>"
-      >+</button>
-
-      <span id="qty-<%= item._id %>"><%= item.quantity %></span>
-
-      <button onclick="updateCart('/cart/decrease/<%= pId %>','<%= item._id %>')">−</button>
-
-      <button onclick="confirmDelete('/cart/remove/<%= pId %>','<%= item._id %>')">
-        Supprimer
-      </button>
-    </div>
+  <!-- Zone d'alerte universelle (Gère le Flash au chargement ET le JavaScript dynamique) -->
+  <div id="stock-error-container" 
+       style="<% if (typeof errorMsg !== 'undefined' && errorMsg.length > 0) { %> display: block; <% } else { %> display: none; <% } %> background-color: #fff3e0; color: #e65100; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 14px;">
+    ⚠️ <span id="stock-error-text"><%= (typeof errorMsg !== 'undefined' && errorMsg.length > 0) ? errorMsg : '' %></span>
   </div>
 
-  <% total += item.price * item.quantity; %>
-<% }) %>
+  <% if (!cart || cart.length === 0) { %>
+    <p class="empty">Votre panier est vide</p>
+  <% } else { %>
+
+    <div class="cart-list">
+      <% let total = 0; %>
+
+      <% cart.forEach(item => { %>
+
+        <!-- 🔥 Extraction sécurisée de l'ID du produit et de son stock réel (via 'produit') -->
+        <% 
+          const pId = item.produit && item.produit._id ? item.produit._id : item.produit;
+          const maxStock = item.produit && typeof item.produit.stock !== 'undefined' ? item.produit.stock : 999;
+        %>
+
+        <div class="cart-item" id="item-<%= item._id %>">
+
+          <img src="<%= item.image %>" class="cart-img">
+
+          <div class="cart-details">
+            <h3><%= item.name %></h3>
+            <p class="price"><%= item.price %>$</p>
+          </div>
+
+          <div class="cart-qty">
+            <!-- 🔥 FIX : Le bouton + se désactive automatiquement si la quantité atteint le stock -->
+            <button 
+              id="btn-inc-<%= item._id %>"
+              onclick="updateCart('/cart/increase/<%= pId %>', '<%= item._id %>')"
+              <%= item.quantity >= maxStock ? 'disabled' : '' %>
+              style="<%= item.quantity >= maxStock ? 'cursor: not-allowed; opacity: 0.5;' : '' %>"
+            >+</button>
+
+            <span id="qty-<%= item._id %>"><%= item.quantity %></span>
+
+            <button onclick="updateCart('/cart/decrease/<%= pId %>','<%= item._id %>')">−</button>
+
+            <button onclick="confirmDelete('/cart/remove/<%= pId %>','<%= item._id %>')">
+              Supprimer
+            </button>
+          </div>
+
+        </div>
+
+        <% total += item.price * item.quantity; %>
+
+      <% }) %>
+    </div>
+
+    <div class="cart-total" id="cart-total">
+      Total: <%= total %>$
+    </div>
+
+    <button type="button" class="checkout-btn" onclick="payWithStripe()">
+      Passer la commande
+    </button>
+
+  <% } %>
+</div>
