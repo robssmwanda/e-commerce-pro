@@ -16,6 +16,12 @@
 
       <% cart.forEach(item => { %>
 
+        <!-- 🔥 Sécurisation : On récupère l'identifiant brut et l'objet produit sécurisé par le populate -->
+        <% 
+          const pId = item.productId && item.productId._id ? item.productId._id : item.productId;
+          const maxStock = item.productId && typeof item.productId.stock !== 'undefined' ? item.productId.stock : 999;
+        %>
+
         <div class="cart-item" id="item-<%= item._id %>">
 
           <img src="<%= item.image %>" class="cart-img">
@@ -26,18 +32,22 @@
           </div>
 
           <div class="cart-qty">
-            <!-- 🔥 FIX : On envoie item.productId pour le serveur, et item._id pour le script visuel -->
-            <button onclick="updateCart('/cart/increase/<%= item.productId %>', '<%= item._id %>')">+</button>
+            <!-- 🔥 FIX : Le bouton + se désactive si la quantité demandée atteint ou dépasse le stock disponible -->
+            <button 
+              id="btn-inc-<%= item._id %>"
+              onclick="updateCart('/cart/increase/<%= pId %>', '<%= item._id %>')"
+              <%= item.quantity >= maxStock ? 'disabled' : '' %>
+              style="<%= item.quantity >= maxStock ? 'cursor: not-allowed; opacity: 0.5;' : '' %>"
+            >+</button>
 
             <span id="qty-<%= item._id %>"><%= item.quantity %></span>
 
-            <button onclick="updateCart('/cart/decrease/<%= item.productId %>','<%= item._id %>')">−</button>
+            <button onclick="updateCart('/cart/decrease/<%= pId %>','<%= item._id %>')">−</button>
 
-            <button onclick="confirmDelete('/cart/remove/<%= item.productId %>','<%= item._id %>')">
+            <button onclick="confirmDelete('/cart/remove/<%= pId %>','<%= item._id %>')">
               Supprimer
             </button>
           </div>
-
 
         </div>
 

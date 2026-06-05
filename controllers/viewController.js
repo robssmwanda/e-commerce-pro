@@ -98,24 +98,25 @@ exports.getCartPage = async (req, res) => {
       return res.redirect('/sign-in');
     }
 
-    let cart = await Cart.findOne({ user: req.user._id });
+    // 🔥 FIX : On ajoute .populate('items.productId') pour charger les détails du produit (comme le stock)
+    let cart = await Cart.findOne({ user: req.user._id }).populate('items.productId');
 
     if (!cart) {
       cart = { items: [] };
     }
 
-    // 🔥 FIX : Extraction et transmission des messages Flash (Erreur de Stock) au template cart.ejs
     res.render('cart', {
       cart: cart.items,
       successMsg: req.flash('success'),
       errorMsg: req.flash('error') 
-    });
+    }
 
   } catch (err) {
     console.error("❌ CART PAGE ERROR:", err);
     res.status(500).send('Erreur serveur');
   }
 };
+
 
 exports.getProfilePage = async (req, res) => {
 
