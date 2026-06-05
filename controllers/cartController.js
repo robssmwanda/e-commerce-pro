@@ -144,28 +144,35 @@ exports.increaseQuantity = async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Panier introuvable' });
     }
 
-    // 🔥 Détection ultra-sécurisée de l'élément dans le panier (gère toutes les clés historiques)
+    // 1. Recherche universelle de l'item ciblé dans la liste du panier
     const item = cart.items.find(item => {
       const targetId = item.produit || item.productId || item.product || item._id;
       return item._id.toString() === productId || (targetId && targetId.toString() === productId);
     });
 
     if (item) {
-      // Extraction de l'ID produit avec toutes les variantes possibles
-      const actualProductId = item.produit || item.productId || item.product;
-      
-      if (!actualProductId) {
-        return res.status(400).json({ status: 'fail', message: "Impossible d'identifier le produit." });
+      // 2. Détermination dynamique de la référence du produit
+      let actualProductId = item.produit || item.productId || item.product;
+      let product = null;
+
+      if (actualProductId) {
+        product = await Product.findById(actualProductId);
       }
 
-      // Récupération du stock frais depuis la collection Product
-      const product = await Product.findById(actualProductId);
-      
+      // 3. RECHERCHE ULTRA-SÉCURISÉE PAR LE NOM : Si la jointure par ID échoue (historique de schémas)
+      if (!product && item.name) {
+        console.log(`🔍 Recherche de secours par nom de produit pour : ${item.name}`);
+        product = await Product.findOne({ name: item.name });
+      }
+
       if (!product) {
-        return res.status(404).json({ status: 'fail', message: "Le produit n'existe pas en base de données." });
+        return res.status(404).json({ 
+          status: 'fail', 
+          message: "Le produit d'origine est introuvable dans la base de données." 
+        });
       }
 
-      // Contrôle strict du stock
+      // 4. Contrôle strict des stocks physiques de MongoDB Compass
       if (item.quantity + 1 > product.stock) {
         return res.status(400).json({
           status: 'fail',
@@ -173,6 +180,7 @@ exports.increaseQuantity = async (req, res) => {
         });
       }
       
+      // 5. Enregistrement des données
       item.quantity += 1;
       await cart.save();
 
@@ -188,10 +196,11 @@ exports.increaseQuantity = async (req, res) => {
     return res.status(404).json({ status: 'fail', message: 'Article introuvable dans le panier' });
 
   } catch (err) {
-    console.error('Erreur increaseQuantity:', err);
+    console.error('Erreur absolue increaseQuantity:', err);
     return res.status(500).json({ status: 'error', message: 'Erreur interne du serveur' });
   }
 };
+
 
 
 exports.decreaseQuantity = async (req, res) => {
