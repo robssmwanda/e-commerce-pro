@@ -140,12 +140,17 @@ exports.increaseQuantity = async (req, res) => {
     const productId = req.params.productId;
     const cart = await Cart.findOne({ user: req.user._id });
 
+    if (!cart) {
+      return res.status(404).json({ status: 'fail', message: 'Panier introuvable' });
+    }
+
+    // 🔥 CORRECTION : On cherche en utilisant 'item.produit' (qui correspond à votre schéma Cart)
     const item = cart.items.find(
-      item => item._id.toString() === productId || item.productId.toString() === productId
+      item => item._id.toString() === productId || (item.produit && item.produit.toString() === productId)
     );
 
     if (item) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findById(item.produit);
       
       if (!product || item.quantity + 1 > product.stock) {
         return res.status(400).json({
@@ -159,7 +164,6 @@ exports.increaseQuantity = async (req, res) => {
 
       const total = cart.items.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
-      // 🔥 On renvoie la nouvelle quantité de cet item précis
       return res.json({
         status: 'success',
         newItemQty: item.quantity,
@@ -167,10 +171,10 @@ exports.increaseQuantity = async (req, res) => {
       });
     }
 
-    res.status(404).json({ status: 'fail', message: 'Article introuvable' });
+    res.status(404).json({ status: 'fail', message: 'Article introuvable dans le panier' });
 
   } catch (err) {
-    console.error(err);
+    console.error('Erreur increaseQuantity:', err);
     res.status(500).json({ status: 'error', message: 'Erreur serveur' });
   }
 };
@@ -180,8 +184,13 @@ exports.decreaseQuantity = async (req, res) => {
     const productId = req.params.productId;
     const cart = await Cart.findOne({ user: req.user._id });
 
+    if (!cart) {
+      return res.status(404).json({ status: 'fail', message: 'Panier introuvable' });
+    }
+
+    // 🔥 CORRECTION : On utilise également 'item.produit' ici
     const item = cart.items.find(
-      item => item._id.toString() === productId || item.productId.toString() === productId
+      item => item._id.toString() === productId || (item.produit && item.produit.toString() === productId)
     );
 
     let newItemQty = 0;
@@ -201,7 +210,6 @@ exports.decreaseQuantity = async (req, res) => {
 
     const total = cart.items.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
-    // 🔥 On renvoie également la quantité ici
     res.json({
       status: 'success',
       newItemQty: newItemQty,
@@ -209,7 +217,7 @@ exports.decreaseQuantity = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error('Erreur decreaseQuantity:', err);
     res.status(500).json({ status: 'error' });
   }
 };

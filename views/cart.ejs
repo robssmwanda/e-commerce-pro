@@ -14,56 +14,47 @@
     <div class="cart-list">
       <% let total = 0; %>
 
-      <% cart.forEach(item => { %>
+     <% cart.forEach(item => { %>
 
-        <!-- 🔥 Extraction corrigée basée sur les propriétés de l'item reformaté -->
-        <% 
-          const pId = item.productId;
-          const maxStock = typeof item.stock !== 'undefined' ? item.stock : 0;
-        %>
+  <!-- 🔥 CORRECTION : Conversion explicite en Number pour éviter les bugs de comparaison -->
+  <% 
+    const pId = item.productId;
+    const maxStock = typeof item.stock !== 'undefined' ? Number(item.stock) : 0;
+    const currentQty = Number(item.quantity);
+  %>
 
-        <div class="cart-item" id="item-<%= item._id %>">
+  <div class="cart-item" id="item-<%= item._id %>">
 
-          <img src="<%= item.image %>" class="cart-img">
+    <img src="<%= item.image %>" class="cart-img">
 
-          <div class="cart-details">
-            <h3><%= item.name %></h3>
-            <p class="price"><%= item.price %>$</p>
-          </div>
-
-          <div class="cart-qty">
-            <!-- Stock maximum stocké dans un attribut data-stock pour le JavaScript -->
-            <button 
-              id="btn-inc-<%= item._id %>"
-              data-stock="<%= maxStock %>"
-              onclick="updateCart('/cart/increase/<%= pId %>', '<%= item._id %>')"
-              <%= item.quantity >= maxStock ? 'disabled' : '' %>
-              style="<%= item.quantity >= maxStock ? 'cursor: not-allowed; opacity: 0.5;' : '' %>"
-            >+</button>
-
-            <span id="qty-<%= item._id %>"><%= item.quantity %></span>
-
-            <button onclick="updateCart('/cart/decrease/<%= pId %>','<%= item._id %>')">−</button>
-
-            <button onclick="confirmDelete('/cart/remove/<%= pId %>','<%= item._id %>')">
-              Supprimer
-            </button>
-          </div>
-
-        </div>
-
-        <% total += item.price * item.quantity; %>
-
-      <% }) %>
+    <div class="cart-details">
+      <h3><%= item.name %></h3>
+      <p class="price"><%= item.price %>$</p>
     </div>
 
-    <div class="cart-total" id="cart-total">
-      Total: <%= total %>$
+    <div class="cart-qty">
+      <!-- On applique les variables nettoyées et converties -->
+      <button 
+        id="btn-inc-<%= item._id %>"
+        data-stock="<%= maxStock %>"
+        onclick="updateCart('/cart/increase/<%= pId %>', '<%= item._id %>')"
+        <%= currentQty >= maxStock ? 'disabled' : '' %>
+        style="<%= currentQty >= maxStock ? 'cursor: not-allowed; opacity: 0.5;' : '' %>"
+      >+</button>
+
+      <span id="qty-<%= item._id %>"><%= item.quantity %></span>
+
+      <button onclick="updateCart('/cart/decrease/<%= pId %>','<%= item._id %>')">−</button>
+
+      <button onclick="confirmDelete('/cart/remove/<%= pId %>','<%= item._id %>')">
+        Supprimer
+      </button>
     </div>
 
-    <button type="button" class="checkout-btn" onclick="payWithStripe()">
-      Passer la commande
-    </button>
+  </div>
 
-  <% } %>
+  <% total += item.price * item.quantity; %>
+
+<% }) %>
+
 </div>
