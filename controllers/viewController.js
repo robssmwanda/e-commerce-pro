@@ -98,25 +98,37 @@ exports.getCart = async (req, res) => {
       return res.redirect('/login');
     }
 
-    // 🔥 On utilise 'items.produit' à la place de 'items.productId'
-    const cart = await Cart.findOne({ user: req.user._id }).populate({
-      path: 'items.produit',
-      select: 'stock' 
-    });
+    // 1. Récupérer le panier brut de l'utilisateur
+    const cart = await Cart.findOne({ user: req.user._id });
+    const cartItems = [];
 
-    const cartItems = cart ? cart.items.map(item => {
-      return {
-        _id: item._id,
-        productId: item.produit ? item.produit._id : null, // Maintient la compatibilité frontend
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        quantity: item.quantity,
-        stock: item.produit ? item.produit.stock : 0 
-      };
-    }) : [];
+    if (cart && cart.items.length > 0) {
+      // 2. Pour chaque item, on va chercher les informations fraîches et réelles du produit en BDD
+      for (const item of cart.items) {
+        if (item.produit) {
+          const freshProduct = await Product.findById(item.produit);
+          
+          cartItems.push({
+            _id: item._id,
+            productId: item.produit,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: item.quantity,
+            // 🔥 On prend le stock directement depuis la collection Product en BDD
+            stock: freshProduct ? freshProduct.stock : 0 
+          });
+        }
+      }
+    }
 
     const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+    // Contrôle rapide dans votre terminal Render pour voir la valeur exacte
+    console.log("--- DEBUG PANIER ---");
+    cartItems.forEach(i => {
+      console.log(`Produit: ${i.name} | Quantité Panier: ${i.quantity} | Stock Réel BDD: ${i.stock}`);
+    });
 
     res.status(200).render('cart', {
       title: 'Mon Panier - Apple (FR)',
@@ -131,6 +143,7 @@ exports.getCart = async (req, res) => {
     res.status(500).send('Erreur serveur lors du chargement du panier');
   }
 };
+
 
 
 
