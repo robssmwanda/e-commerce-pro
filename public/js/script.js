@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let updatingCart = false;
 
   // =========================
-  // ALERT
+  // ALERTES FLASH
   // =========================
   const alertBox = document.querySelector('.alert');
   if (alertBox) {
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================
-  // INPUTS
+  // ACTIONS SUR LES INPUTS FORMULAIRES
   // =========================
   const inputs = document.querySelectorAll('.input-field');
   const form = document.querySelector('form');
@@ -39,26 +39,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // =========================
-  // LOAD CART COUNT
+  // CHARGEMENT DU COMPTEUR DE PANIER (BADGE)
   // =========================
   async function loadCartCount() {
     try {
       if (updatingCart) return;
 
-      const res = await fetch('/cart', {
-        credentials: 'include'
+      const res = await fetch('/cart-page', { // 🔥 CORRECTION : Aligné avec votre route d'affichage
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' }
       });
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) return;
 
       const data = await res.json();
       const badge = document.querySelector('.cart-count');
 
-      if (badge && data.items) {
-        const totalQty = data.items.reduce((acc, item) => acc + item.quantity, 0);
-
+      if (badge && data.cart) {
+        const totalQty = data.cart.reduce((acc, item) => acc + item.quantity, 0);
         badge.textContent = totalQty;
-        badge.style.display = totalQty === 0
-          ? 'none'
-          : 'inline-block';
+        badge.style.display = totalQty === 0 ? 'none' : 'inline-block';
       }
 
     } catch (err) {
@@ -69,13 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCartCount();
 
   // =========================
-  // BUTTON ADD TO CART
+  // BOUTON AJOUTER AU PANIER (CATALOGUE)
   // =========================
   const btns = document.querySelectorAll('.add-to-cart');
 
   btns.forEach(btn => {
     btn.addEventListener('click', async function () {
-
       if (this.disabled) return;
 
       this.disabled = true;
@@ -92,13 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
           image: this.dataset.image
         };
 
-        console.log('PRODUCT:', product);
-
         const res = await fetch('/cart/add', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product)
         });
 
@@ -108,16 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const data = await res.json();
-        console.log('ADD RESPONSE:', data);
 
         if (data.status === 'success') {
-
           const badge = document.querySelector('.cart-count');
           if (badge) {
             badge.textContent = data.totalQty;
-            badge.style.display = data.totalQty === 0
-              ? 'none'
-              : 'inline-block';
+            badge.style.display = data.totalQty === 0 ? 'none' : 'inline-block';
           }
 
           this.innerText = "Ajouté ✓";
@@ -158,17 +150,18 @@ document.addEventListener('DOMContentLoaded', () => {
         this.style.cursor = "";
         updatingCart = false;
       }
-
     });
   });
 
+  // =========================
+  // BOUTON RENVOI DE L'EMAIL
+  // =========================
   const resendBtn = document.getElementById('resendBtn');
   let sendingEmail = false;
 
   if (resendBtn) {
     resendBtn.addEventListener('click', () => {
       if (sendingEmail) return;
-
       sendingEmail = true;
 
       setTimeout(() => {
@@ -181,15 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
        resendBtn.style.transform = "scale(0.98)";
     });
   }
-
 });
 
 // ==========================================
 // FONCTIONS GLOBALES (ACCESSIBLES VIA WINDOW)
 // ==========================================
 
-// 🔥 AJOUT : Gestion dynamique des boutons + et - avec alerte de stock
-// 🔥 LOGIQUE MISE À JOUR : Contrôle dynamique des boutons + et - selon le stock réel
+// 🔥 GESTION DYNAMIQUE DES QUANTITÉS ET DU STOCK EN DIRECT
 window.updateCart = async function (url, itemId) {
   try {
     const errorContainer = document.getElementById('stock-error-container');
@@ -208,20 +199,19 @@ window.updateCart = async function (url, itemId) {
 
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      console.log("Le serveur a renvoyé une page HTML au lieu de JSON.");
+      console.log("Réponse HTML reçue au lieu de JSON.");
       window.location.reload();
       return;
     }
 
     const data = await res.json();
 
-    // Si le serveur bloque l'augmentation (Statut 400 - Stock épuisé)
+    // Gestion du blocage serveur (Plus de stock)
     if (!res.ok) {
       if (errorContainer && errorText) {
         errorText.innerText = data.message || "Limite de stock atteinte.";
         errorContainer.style.display = 'block';
       }
-      // On force la désactivation locale par sécurité
       if (btnInc) {
         btnInc.disabled = true;
         btnInc.style.cursor = 'not-allowed';
@@ -232,35 +222,34 @@ window.updateCart = async function (url, itemId) {
 
     if (errorContainer) errorContainer.style.display = 'none';
 
-    // 1. Mise à jour de la quantité affichée à l'écran
+    // 1. Mise à jour de la quantité à l'écran
     const qtyEl = document.getElementById(`qty-${itemId}`);
     if (qtyEl && data.newItemQty !== undefined) {
       qtyEl.textContent = data.newItemQty;
 
-      // Si l'article est tombé à 0 suite à une diminution, on supprime la ligne du DOM
       if (data.newItemQty === 0) {
         const itemEl = document.querySelector(`#item-${itemId}`);
         if (itemEl) itemEl.remove();
       }
     }
 
-    // 2. Vérification dynamique du stock pour activer/désactiver le bouton "+"
+    // 2. 🔥 LOGIQUE DE COMPARAISON : Désactivation stricte si la quantité atteint le stock max
     if (btnInc && data.newItemQty !== undefined) {
       const maxStock = parseInt(btnInc.getAttribute('data-stock'), 10) || 0;
+      const currentQty = parseInt(data.newItemQty, 10);
 
-      if (data.newItemQty >= maxStock) {
+      if (currentQty >= maxStock) {
         btnInc.disabled = true;
         btnInc.style.cursor = 'not-allowed';
         btnInc.style.opacity = '0.5';
       } else {
-        // Si on a diminué la quantité en dessous du stock, on réactive le bouton
         btnInc.disabled = false;
         btnInc.style.cursor = '';
         btnInc.style.opacity = '';
       }
     }
 
-    // 3. Mise à jour du prix total affiché
+    // 3. Mise à jour du total du panier
     const totalEl = document.querySelector('#cart-total');
     if (totalEl && data.total !== undefined) {
       totalEl.textContent = `Total: ${data.total}$`;
@@ -271,6 +260,7 @@ window.updateCart = async function (url, itemId) {
   }
 };
 
+// 🔥 ACTION DE SUPPRESSION D'UN ARTICLE
 window.confirmDelete = async function (url, itemId) {
   const confirmAction = confirm("Voulez-vous supprimer cet élément ?");
   if (!confirmAction) return;
@@ -284,58 +274,14 @@ window.confirmDelete = async function (url, itemId) {
       if (itemEl) itemEl.remove();
 
       const totalEl = document.querySelector('#cart-total');
-      if (totalEl) {
+      if (totalEl && data.total !== undefined) {
         totalEl.textContent = `Total: ${data.total}$`;
       }
       
-      // Cache le bandeau d'erreur si l'article problématique est supprimé
       const errorContainer = document.getElementById('stock-error-container');
       if (errorContainer) errorContainer.style.display = 'none';
     }
   } catch (err) {
     console.error(err);
-  }
-};
-
-window.payWithStripe = async function () {
-  try {
-    console.log("🚀 Clic sur le bouton de paiement détecté !");
-
-    const checkoutBtn = document.querySelector('.checkout-btn');
-    if (checkoutBtn) {
-      checkoutBtn.innerText = "Chargement...";
-      checkoutBtn.disabled = true;
-    }
-
-    const res = await fetch('/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    });
-
-    const data = await res.json();
-    console.log("💳 Réponse reçue du serveur backend :", data);
-
-    if (data.status === 'success' && data.url) {
-      window.location.assign(data.url);
-    } else {
-      alert(data.message || 'Erreur lors de la création de la session Stripe.');
-      if (checkoutBtn) {
-        checkoutBtn.innerText = "Passer la commande";
-        checkoutBtn.disabled = false;
-      }
-    }
-
-  } catch (err) {
-    console.error("❌ Erreur lors de l'appel au Checkout Stripe:", err);
-    alert("Impossible de joindre le serveur de paiement.");
-    
-    const checkoutBtn = document.querySelector('.checkout-btn');
-    if (checkoutBtn) {
-      checkoutBtn.innerText = "Passer la commande";
-      checkoutBtn.disabled = false;
-    }
   }
 };
