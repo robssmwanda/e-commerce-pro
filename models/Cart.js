@@ -10,9 +10,9 @@ const cartSchema = mongoose.Schema({
 
    items: [
      {
-       produit: {
+       produit: { // 🟢 On garde 'produit' ici pour que votre contrôleur et votre template cart.ejs fonctionnent
         type: mongoose.Schema.ObjectId,
-        ref: 'Produit'
+        ref: 'Product' // 🔥 C'EST ICI QU'IL FAUT METTRE 'Product' (en anglais) !
        },
        name: String,
        price: Number,
