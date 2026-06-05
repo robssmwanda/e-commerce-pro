@@ -125,6 +125,18 @@ router.get('/check-email', (req, res) => {
 
 });
 
+router.post(
+   '/cart/increase/:productId',
+   protect,
+   cartController.increaseQuantity
+);
+
+router.post(
+   '/cart/decrease/:productId',
+   protect,
+   cartController.decreaseQuantity
+);
+
 router.get(
    '/account',
    protect,
