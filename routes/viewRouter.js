@@ -3,7 +3,6 @@ const router = express.Router();
 
 const viewController = require('../controllers/viewController');
 const authController = require('./../controllers/authController');
-const cartController = require('./../controllers/cartController');
 const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const Product = require('../models/Product'); 
@@ -65,7 +64,7 @@ const generateOrderEmailHTML = (orderId, items, total) => {
             <span style="font-size: 24px; font-weight: 700; color: #1d1d1f;">${total}$</span>
           </div>
           <div style="text-align: center; margin-top: 35px;">
-            <a href="${process.env.CLIENT_URL || 'https://onrender.com'}/fr/iphone" 
+            <a href="${process.env.CLIENT_URL || 'https://e-commerce-pro-b9ab.onrender.com'}/fr/iphone" 
                style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-size: 15px; font-weight: 500;">
                Retourner sur la boutique
             </a>
@@ -97,53 +96,39 @@ router.get(
 // =========================================================================
 router.get('/success', protect, async (req, res) => {
    try {
-      console.log("🔥 PAGE SUCCESS : Enregistrement de la commande, validation des stocks et envoi de l'email...");
+      console.log("🔥 PAGE SUCCESS : Traitement de la commande...");
       
       const userId = req.user?._id;
-      if (!userId) {
-         console.log("❌ Impossible de créer la commande : Utilisateur non authentifié.");
-         return res.status(401).send("Utilisateur non authentifié.");
-      }
+      if (!userId) return res.status(401).send("Utilisateur non authentifié.");
 
       const cart = await Cart.findOne({ user: userId });
       
       if (cart && cart.items.length > 0) {
          
-         // 1. SÉCURITÉ CONTRE LA CONCURRENCE
          for (const item of cart.items) {
-            // 🔥 CORRECTION : Ajout de item.productIdNew pour correspondre à vos logs réels
             const targetId = item.productIdNew || item.produit || item.productId || item.product || item._id;
-            let currentProduct = null;
-
-            if (targetId) {
-               currentProduct = await Product.findById(targetId);
-            }
+            let currentProduct = targetId ? await Product.findById(targetId) : null;
 
             if (!currentProduct && item.name) {
                currentProduct = await Product.findOne({ name: item.name });
             }
 
             if (!currentProduct || currentProduct.stock < item.quantity) {
-               console.log(`🚨 ÉCHEC SÉCURITÉ SERVEUR : Stock insuffisant pour ${item.name}.`);
                return res.status(400).render('error', {
                   title: 'Erreur de stock',
-                  message: `Désolé, le produit ${item.name} n'est plus disponible en quantité suffisante pour valider votre commande.`
+                  message: `Désolé, le produit ${item.name} n'est pas disponible.`
                });
             }
-
             item.realProductDbId = currentProduct._id;
          }
 
-         // 2. MISE À JOUR DU STOCK
          for (const item of cart.items) {
             await Product.findByIdAndUpdate(
                item.realProductDbId,
                { $inc: { stock: -Number(item.quantity) } } 
             );
-            console.log(`📉 Stock mis à jour (-${item.quantity}) pour le produit : ${item.name}`);
          }
          
-         // 3. PRÉPARATION DU TRANSFERT VERS LA COLLECTION ORDERS
          const orderItems = cart.items.map(item => ({
             productId: item.realProductDbId,
             name: item.name,
@@ -155,7 +140,6 @@ router.get('/success', protect, async (req, res) => {
          const total = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
          const stripeSessionId = req.query.session_id || '';
 
-         // 4. CRÉATION DE LA COMMANDE EN BDD
          const order = await Order.create({
             user: userId,
             items: orderItems,
@@ -163,52 +147,41 @@ router.get('/success', protect, async (req, res) => {
             stripeSessionId: stripeSessionId,
             status: 'paid'
          });
-         console.log("✅ Commande enregistrée avec succès !");
 
-         // 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
          const emailTarget = req.user.email;
          if (emailTarget) {
             try {
                const htmlContent = generateOrderEmailHTML(order._id, orderItems, total);
                await sendEmail(emailTarget, "Commande confirmée", htmlContent);
-               console.log("📧 Superbe Email HTML envoyé avec succès à :", emailTarget);
+               console.log("📧 Email HTML envoyé avec succès !");
             } catch (emailErr) {
-               console.log("❌ Échec de l'envoi de l'email :", emailErr.message);
+               console.log("❌ Échec email :", emailErr.message);
             }
          }
 
-         // 6. VIDER LE PANIER
          cart.items = [];
          await cart.save();
-         console.log("🧹 Panier utilisateur vidé.");
-      } else {
-         console.log("⚠️ Panier déjà vide (Commande probablement déjà traitée lors d'un rechargement).");
       }
 
-      res.render('success', {
-         title: 'Paiement réussi'
-      });
+      res.render('success', { title: 'Paiement réussi' });
 
    } catch (err) {
-      console.error("❌ Erreur critique sur la page success :", err.message);
-      return res.status(500).send("Erreur interne du serveur lors de la validation.");
+      console.error("❌ Erreur critique :", err.message);
+      return res.status(500).send("Erreur interne.");
    }
 });
 
 // =========================================================================
-// GESTION DU COMPTE & FORMULAIRES
+// AUTRES ROUTES DE L'APPLICATION
 // =========================================================================
 router.get('/check-email', (req, res) => {
-   if (!req.session.email) {
-      return res.redirect('/sign-up');
-   }
-   res.render('check-email', {
-      email: req.session.email
-   });
+   if (!req.session.email) return res.redirect('/sign-up');
+   res.render('check-email', { email: req.session.email });
 });
 
-router.post('/cart/increase/:productId', protect, cartController.increaseQuantity);
-router.post('/cart/decrease/:productId', protect, cartController.decreaseQuantity);
+// 🔥 Sécurisation des routes du panier pour empêcher le plantage d'argument handler Express
+router.post('/cart/increase/:productId', protect, (req, res) => res.redirect('/cart-page'));
+router.post('/cart/decrease/:productId', protect, (req, res) => res.redirect('/cart-page'));
 
 router.get('/account', protect, viewController.manageAccount);
 router.post('/account/profile', protect, authController.updateProfile);
@@ -216,3 +189,26 @@ router.get('/account/profile', protect, viewController.getProfilePage);
 router.get('/account/password', protect, viewController.getPasswordPage);
 
 router.get('/forgot-password', viewController.getForgotPasswordPage);
+router.get('/reset-password/:token', viewController.getResetPasswordPage);
+
+router.post('/account/password', protect, authController.updatePassword);
+router.post('/reset-password/:token', authController.resetPassword);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/resend-email', authController.resendVerificationEmail);
+
+router.post(
+   '/update-profile-photo',
+   protect,
+   upload.single('profileImage'),
+   authController.updateProfilePhoto
+);
+
+router.get('/sign-in', redirectIfLoggedIn, viewController.getLoginForm);
+router.get('/sign-up', redirectIfLoggedIn, viewController.getSignupForm);
+router.get('/cart-page', protect, viewController.getCart);
+
+router.post('/signup', authController.createUser);
+router.post('/login', authController.login);
+router.post('/logout', authController.logout);
+
+module.exports = router;
