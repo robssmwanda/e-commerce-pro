@@ -92,7 +92,7 @@ router.get(
 );
 
 // =========================================================================
-// SÉCURITÉ SERVEUR MAXIMALE & ENVOI EMAIL
+// SÉCURITÉ SERVEUR MAXIMALE & ENVOI EMAIL (NON-BLOQUANT)
 // =========================================================================
 router.get('/success', protect, async (req, res) => {
    try {
@@ -152,8 +152,9 @@ router.get('/success', protect, async (req, res) => {
          if (emailTarget) {
             try {
                const htmlContent = generateOrderEmailHTML(order._id, orderItems, total);
-               await sendEmail(emailTarget, "Commande confirmée", htmlContent);
-               console.log("📧 Email HTML envoyé avec succès !");
+               // 🔥 PAS DE AWAIT ICI : L'email s'envoie en tâche de fond, le timeout réseau ne bloquera plus le client !
+               sendEmail(emailTarget, "Commande confirmée", htmlContent);
+               console.log("📧 Email HTML envoyé en tâche de fond avec succès !");
             } catch (emailErr) {
                console.log("❌ Échec email :", emailErr.message);
             }
@@ -179,7 +180,6 @@ router.get('/check-email', (req, res) => {
    res.render('check-email', { email: req.session.email });
 });
 
-// 🔥 Sécurisation des routes du panier pour empêcher le plantage d'argument handler Express
 router.post('/cart/increase/:productId', protect, (req, res) => res.redirect('/cart-page'));
 router.post('/cart/decrease/:productId', protect, (req, res) => res.redirect('/cart-page'));
 
