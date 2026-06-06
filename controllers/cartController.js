@@ -212,7 +212,6 @@ exports.decreaseQuantity = async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Panier introuvable' });
     }
 
-    // 🔥 CORRECTION : On utilise également 'item.produit' ici
     const item = cart.items.find(
       item => item._id.toString() === productId || (item.produit && item.produit.toString() === productId)
     );
@@ -237,7 +236,8 @@ exports.decreaseQuantity = async (req, res) => {
     res.json({
       status: 'success',
       newItemQty: newItemQty,
-      total: total
+      total: total,
+      cartLength: cart.items.length // 🔥 AJOUT : On transmet la longueur du panier au frontend
     });
 
   } catch (err) {

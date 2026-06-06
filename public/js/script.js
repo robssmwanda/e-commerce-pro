@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 
 // 🔥 GESTION DYNAMIQUE DES QUANTITÉS ET DU STOCK EN DIRECT
+// 🔥 GESTION DYNAMIQUE DES QUANTITÉS ET DU STOCK EN DIRECT
 window.updateCart = async function (url, itemId) {
   try {
     const errorContainer = document.getElementById('stock-error-container');
@@ -222,6 +223,25 @@ window.updateCart = async function (url, itemId) {
 
     if (errorContainer) errorContainer.style.display = 'none';
 
+    // 🔥 VÉRIFICATION PANIER VIDE : Si le total est à 0 ou le panier vide, on rafraîchit ou vide l'affichage
+    if (data.total === 0 || data.cartLength === 0) {
+      // Option 1 : Recharger la page pour appliquer le template "Panier Vide" de votre serveur
+      window.location.reload();
+      return;
+      
+      /* 
+      // Option 2 (Alternative sans rechargement) : Si vous préférez modifier directement le HTML, décommentez ce bloc :
+      const mainContainer = document.querySelector('.cart-page') || document.body;
+      mainContainer.innerHTML = `
+        <div style="text-align: center; padding: 50px;">
+          <h2>Mon Panier</h2>
+          <p>Votre panier est vide</p>
+        </div>
+      `;
+      return;
+      */
+    }
+
     // 1. Mise à jour de la quantité à l'écran
     const qtyEl = document.getElementById(`qty-${itemId}`);
     if (qtyEl && data.newItemQty !== undefined) {
@@ -233,7 +253,7 @@ window.updateCart = async function (url, itemId) {
       }
     }
 
-    // 2. 🔥 LOGIQUE DE COMPARAISON : Désactivation stricte si la quantité atteint le stock max
+    // 2. LOGIQUE DE COMPARAISON : Désactivation stricte si la quantité atteint le stock max
     if (btnInc && data.newItemQty !== undefined) {
       const maxStock = parseInt(btnInc.getAttribute('data-stock'), 10) || 0;
       const currentQty = parseInt(data.newItemQty, 10);
@@ -250,7 +270,7 @@ window.updateCart = async function (url, itemId) {
     }
 
     // 3. Mise à jour du total du panier
-    const totalEl = document.querySelector('#cart-total');
+    const totalEl = document.querySelector('#cart-total') || document.querySelector('.total-price');
     if (totalEl && data.total !== undefined) {
       totalEl.textContent = `Total: ${data.total}$`;
     }
