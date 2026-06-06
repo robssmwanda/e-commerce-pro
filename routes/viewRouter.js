@@ -8,7 +8,7 @@ const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const Product = require('../models/Product'); 
 const upload = require('../utils/multer');
-const sendEmail = require('../utils/sendEmail');
+const sendEmail = require('../utils/sendEmail'); // 🔥 Importation obligatoire pour l'envoi
 
 const {
    protect,
@@ -16,7 +16,7 @@ const {
 } = require('./../middlewares/authMiddlewares');
 
 // =========================================================================
-// 🔥 GENERATEUR DE TEMPLATE EMAIL EXCLUSIF (STYLE APPLE)
+// 🔥 GÉNÉRATEUR DE TEMPLATE EMAIL EXCLUSIF (STYLE APPLE)
 // =========================================================================
 const generateOrderEmailHTML = (orderId, items, total) => {
   const itemRows = items.map(item => `
@@ -80,7 +80,7 @@ const generateOrderEmailHTML = (orderId, items, total) => {
 };
 
 // =========================================================================
-// ROUTES ACCÈS DE BASE & AUTHENTIFICATION
+// ROUTES DE BASE
 // =========================================================================
 router.get('/verify-email/:token', authController.verifyEmail);
 router.get('/', viewController.getHome);
@@ -93,11 +93,11 @@ router.get(
 );
 
 // =========================================================================
-// SÉCURITÉ SERVEUR MAXIMALE : Traitement de la commande et décrémentation des stocks
+// SÉCURITÉ SERVEUR MAXIMALE & ENVOI EMAIL
 // =========================================================================
 router.get('/success', protect, async (req, res) => {
    try {
-      console.log("🔥 PAGE SUCCESS : Enregistrement de la commande, validation des stocks... ");
+      console.log("🔥 PAGE SUCCESS : Enregistrement de la commande, validation des stocks et envoi de l'email...");
       
       const userId = req.user?._id;
       if (!userId) {
@@ -126,7 +126,7 @@ router.get('/success', protect, async (req, res) => {
                console.log(`🚨 ÉCHEC SÉCURITÉ SERVEUR : Stock insuffisant pour ${item.name}.`);
                return res.status(400).render('error', {
                   title: 'Erreur de stock',
-                  message: `Désolé, le produit ${item.name} n'est plus disponible en quantité suffisante.`
+                  message: `Désolé, le produit ${item.name} n'est plus disponible en quantité suffisante pour valider votre commande.`
                });
             }
 
@@ -137,12 +137,12 @@ router.get('/success', protect, async (req, res) => {
          for (const item of cart.items) {
             await Product.findByIdAndUpdate(
                item.realProductDbId,
-               { $inc: { stock: -Number(item.quantity) } }
+               { $inc: { stock: -Number(item.quantity) } } 
             );
             console.log(`📉 Stock mis à jour (-${item.quantity}) pour le produit : ${item.name}`);
          }
          
-         // 3. PRÉPARATION DU TRANSFERT
+         // 3. PRÉPARATION DU TRANSFERT VERS LA COLLECTION ORDERS
          const orderItems = cart.items.map(item => ({
             productId: item.realProductDbId,
             name: item.name,
@@ -164,7 +164,7 @@ router.get('/success', protect, async (req, res) => {
          });
          console.log("✅ Commande enregistrée avec succès !");
 
-         // 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
+         // 🔥 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
          const emailTarget = req.user.email;
          if (emailTarget) {
             try {
@@ -181,7 +181,7 @@ router.get('/success', protect, async (req, res) => {
          await cart.save();
          console.log("🧹 Panier utilisateur vidé.");
       } else {
-         console.log("⚠️ Panier déjà vide.");
+         console.log("⚠️ Panier déjà vide (Commande probablement déjà traitée lors d'un rechargement).");
       }
 
       res.render('success', {
@@ -195,7 +195,7 @@ router.get('/success', protect, async (req, res) => {
 });
 
 // =========================================================================
-// AUTRES ROUTES DE L'APPLICATION (PROFIL, PANIER, COMPTE)
+// GESTION DU COMPTE & FORMULAIRES
 // =========================================================================
 router.get('/check-email', (req, res) => {
    if (!req.session.email) {
@@ -206,49 +206,14 @@ router.get('/check-email', (req, res) => {
    });
 });
 
-router.post(
-   '/cart/increase/:productId',
-   protect,
-   cartController.increaseQuantity
-);
+router.post('/cart/increase/:productId', protect, cartController.increaseQuantity);
+router.post('/cart/decrease/:productId', protect, cartController.decreaseQuantity);
 
-router.post(
-   '/cart/decrease/:productId',
-   protect,
-   cartController.decreaseQuantity
-);
+router.get('/account', protect, viewController.manageAccount);
+router.post('/account/profile', protect, authController.updateProfile);
+router.get('/account/profile', protect, viewController.getProfilePage);
+router.get('/account/password', protect, viewController.getPasswordPage);
 
-router.get(
-   '/account',
-   protect,
-   viewController.manageAccount
-);
-
-router.post(
-   '/account/profile',
-   protect,
-   authController.updateProfile
-);
-
-router.get(
-   '/account/profile',
-   protect,
-   viewController.getProfilePage
-);
-
-router.get(
-   '/account/password',
-   protect,
-   viewController.getPasswordPage
-);
-
-router.get(
-   '/forgot-password',
-   viewController.getForgotPasswordPage
-);
-
-router.get(
-   '/reset-password/:token',
-   viewController.getResetPasswordPage
-);
+router.get('/forgot-password', viewController.getForgotPasswordPage);
+router.get('/reset-password/:token', viewController.getResetPasswordPage);
 
