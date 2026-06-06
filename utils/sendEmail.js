@@ -1,28 +1,22 @@
-const nodemailer = require('nodemailer')
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-})
+// Initialisation via la clé API de vos variables d'environnement sur Render
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async (to, subject, htmlContent) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"Apple Store" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html
-    })
-
-    console.log("📧 Email envoyé:", info.response)
-
-  } catch (err) {
-    console.error("❌ Erreur envoi email:", err.message)
-    throw err
+    const data = await resend.emails.send({
+      from: 'onboarding@resend.dev', // Adresse de test gratuite de Resend
+      to: to,
+      subject: subject,
+      html: htmlContent,
+    });
+    
+    console.log("📧 Email envoyé avec succès via l'API Resend !");
+    return data;
+  } catch (error) {
+    console.error("❌ Erreur API Resend :", error.message);
   }
-}
+};
 
-module.exports = sendEmail
+module.exports = sendEmail;
