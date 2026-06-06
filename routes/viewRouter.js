@@ -8,13 +8,12 @@ const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const Product = require('../models/Product'); 
 const upload = require('../utils/multer');
-const sendEmail = require('../utils/sendEmail'); // 🔥 IMPORTE LE MODULE EMAIL ICI
+const sendEmail = require('../utils/sendEmail');
 
 const {
    protect,
    redirectIfLoggedIn
 } = require('./../middlewares/authMiddlewares');
-
 
 // =========================================================================
 // 🔥 GENERATEUR DE TEMPLATE EMAIL EXCLUSIF (STYLE APPLE)
@@ -80,7 +79,9 @@ const generateOrderEmailHTML = (orderId, items, total) => {
   `;
 };
 
-
+// =========================================================================
+// ROUTES ACCÈS DE BASE & AUTHENTIFICATION
+// =========================================================================
 router.get('/verify-email/:token', authController.verifyEmail);
 router.get('/', viewController.getHome);
 router.get('/fr/iphone/', viewController.getIphone);
@@ -96,7 +97,7 @@ router.get(
 // =========================================================================
 router.get('/success', protect, async (req, res) => {
    try {
-      console.log("🔥 PAGE SUCCESS : Enregistrement de la commande, validation des stocks et envoi de l'email...");
+      console.log("🔥 PAGE SUCCESS : Enregistrement de la commande, validation des stocks... ");
       
       const userId = req.user?._id;
       if (!userId) {
@@ -163,7 +164,7 @@ router.get('/success', protect, async (req, res) => {
          });
          console.log("✅ Commande enregistrée avec succès !");
 
-         // 🔥 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
+         // 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
          const emailTarget = req.user.email;
          if (emailTarget) {
             try {
@@ -192,3 +193,62 @@ router.get('/success', protect, async (req, res) => {
       return res.status(500).send("Erreur interne du serveur lors de la validation.");
    }
 });
+
+// =========================================================================
+// AUTRES ROUTES DE L'APPLICATION (PROFIL, PANIER, COMPTE)
+// =========================================================================
+router.get('/check-email', (req, res) => {
+   if (!req.session.email) {
+      return res.redirect('/sign-up');
+   }
+   res.render('check-email', {
+      email: req.session.email
+   });
+});
+
+router.post(
+   '/cart/increase/:productId',
+   protect,
+   cartController.increaseQuantity
+);
+
+router.post(
+   '/cart/decrease/:productId',
+   protect,
+   cartController.decreaseQuantity
+);
+
+router.get(
+   '/account',
+   protect,
+   viewController.manageAccount
+);
+
+router.post(
+   '/account/profile',
+   protect,
+   authController.updateProfile
+);
+
+router.get(
+   '/account/profile',
+   protect,
+   viewController.getProfilePage
+);
+
+router.get(
+   '/account/password',
+   protect,
+   viewController.getPasswordPage
+);
+
+router.get(
+   '/forgot-password',
+   viewController.getForgotPasswordPage
+);
+
+router.get(
+   '/reset-password/:token',
+   viewController.getResetPasswordPage
+);
+
