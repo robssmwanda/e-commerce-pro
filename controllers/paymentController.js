@@ -67,7 +67,7 @@ const generateOrderEmailHTML = (orderId, items, total) => {
 
           <!-- Bouton d'action -->
           <div style="text-align: center; margin-top: 35px;">
-            <a href="${process.env.CLIENT_URL || 'https://e-commerce-pro-b9ab.onrender.com'}/cart-page" 
+            <a href="${process.env.CLIENT_URL || 'https://onrender.com'}/cart-page" 
                style="background-color: #0071e3; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-size: 15px; font-weight: 500;">
                Retourner sur la boutique
             </a>
@@ -108,7 +108,7 @@ exports.checkoutStripe = async (req, res) => {
       let imageUrl = item.image;
       
       if (imageUrl && !imageUrl.startsWith('http')) {
-        const baseUrl = process.env.CLIENT_URL || 'https://e-commerce-pro-b9ab.onrender.com';
+        const baseUrl = process.env.CLIENT_URL || 'https://onrender.com';
         imageUrl = `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
       }
 
@@ -179,12 +179,18 @@ exports.webhookStripe = async (req, res) => {
       expand: ['data.price.product']
     })
 
-    const items = lineItems.data.map(item => ({
-      name: item.description,
-      price: item.amount_total / 100 / item.quantity, // Prix unitaire
-      quantity: item.quantity,
-      image: item.price?.product?.images?.[0] || ''
-    }))
+    // 🔥 FIX : Correction de la syntaxe de l'accès aux images facultatives
+    const items = lineItems.data.map(item => {
+      const productData = item.price && item.price.product ? item.price.product : null;
+      const fallbackImage = productData && productData.images && productData.images.length > 0 ? productData.images[0] : '';
+      
+      return {
+        name: item.description,
+        price: (item.amount_total / 100) / item.quantity, 
+        quantity: item.quantity,
+        image: fallbackImage
+      };
+    })
 
     const total = session.amount_total / 100
 
@@ -211,13 +217,12 @@ exports.webhookStripe = async (req, res) => {
 
     if (emailToSend) {
       try {
-        // 🔥 MODIFICATION : On génère le HTML et on le passe à la fonction sendEmail
         const htmlContent = generateOrderEmailHTML(order._id, items, total);
         
         await sendEmail(
           emailToSend,
           "Commande confirmée",
-          htmlContent // Envoi du code HTML stylisé
+          htmlContent 
         )
         console.log("📧 Email envoyé à", emailToSend)
       } catch (err) {
