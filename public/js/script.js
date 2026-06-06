@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (updatingCart) return;
 
-      const res = await fetch('/cart-page', { // 🔥 CORRECTION : Aligné avec votre route d'affichage
+      const res = await fetch('/cart-page', { 
         credentials: 'include',
         headers: { 'Accept': 'application/json' }
       });
@@ -180,8 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // FONCTIONS GLOBALES (ACCESSIBLES VIA WINDOW)
 // ==========================================
 
-// 🔥 GESTION DYNAMIQUE DES QUANTITÉS ET DU STOCK EN DIRECT
-// 🔥 GESTION DYNAMIQUE DES QUANTITÉS ET DU STOCK EN DIRECT
+// 🔥 GESTION DYNAMIQUE DES QUANTITÉS ET DU STOCK EN DIRECT (CORRIGÉE)
 window.updateCart = async function (url, itemId) {
   try {
     const errorContainer = document.getElementById('stock-error-container');
@@ -207,7 +206,6 @@ window.updateCart = async function (url, itemId) {
 
     const data = await res.json();
 
-    // Gestion du blocage serveur (Plus de stock)
     if (!res.ok) {
       if (errorContainer && errorText) {
         errorText.innerText = data.message || "Limite de stock atteinte.";
@@ -223,26 +221,11 @@ window.updateCart = async function (url, itemId) {
 
     if (errorContainer) errorContainer.style.display = 'none';
 
-    // 🔥 VÉRIFICATION PANIER VIDE : Si le total est à 0 ou le panier vide, on rafraîchit ou vide l'affichage
     if (data.total === 0 || data.cartLength === 0) {
-      // Option 1 : Recharger la page pour appliquer le template "Panier Vide" de votre serveur
       window.location.reload();
       return;
-      
-      /* 
-      // Option 2 (Alternative sans rechargement) : Si vous préférez modifier directement le HTML, décommentez ce bloc :
-      const mainContainer = document.querySelector('.cart-page') || document.body;
-      mainContainer.innerHTML = `
-        <div style="text-align: center; padding: 50px;">
-          <h2>Mon Panier</h2>
-          <p>Votre panier est vide</p>
-        </div>
-      `;
-      return;
-      */
     }
 
-    // 1. Mise à jour de la quantité à l'écran
     const qtyEl = document.getElementById(`qty-${itemId}`);
     if (qtyEl && data.newItemQty !== undefined) {
       qtyEl.textContent = data.newItemQty;
@@ -253,7 +236,6 @@ window.updateCart = async function (url, itemId) {
       }
     }
 
-    // 2. LOGIQUE DE COMPARAISON : Désactivation stricte si la quantité atteint le stock max
     if (btnInc && data.newItemQty !== undefined) {
       const maxStock = parseInt(btnInc.getAttribute('data-stock'), 10) || 0;
       const currentQty = parseInt(data.newItemQty, 10);
@@ -269,8 +251,7 @@ window.updateCart = async function (url, itemId) {
       }
     }
 
-    // 3. Mise à jour du total du panier
-    const totalEl = document.querySelector('#cart-total') || document.querySelector('.total-price');
+    const totalEl = document.querySelector('#cart-total');
     if (totalEl && data.total !== undefined) {
       totalEl.textContent = `Total: ${data.total}$`;
     }
@@ -293,15 +274,58 @@ window.confirmDelete = async function (url, itemId) {
       const itemEl = document.querySelector(`#item-${itemId}`);
       if (itemEl) itemEl.remove();
 
-      const totalEl = document.querySelector('#cart-total');
-      if (totalEl && data.total !== undefined) {
-        totalEl.textContent = `Total: ${data.total}$`;
+      if (data.total === 0) {
+        window.location.reload();
+        return;
       }
-      
-      const errorContainer = document.getElementById('stock-error-container');
-      if (errorContainer) errorContainer.style.display = 'none';
+
+      const totalEl = document.querySelector('#cart-total');
+      if (totalEl) totalEl.textContent = `Total: ${data.total}$`;
     }
   } catch (err) {
     console.error(err);
+  }
+};
+
+// 🔥 SÉCURITÉ STRIPE : FONCTION AJOUTÉE POUR INITIALISER LE PAIEMENT
+window.payWithStripe = async function() {
+  try {
+    const btn = document.querySelector('.checkout-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerText = "Redirection vers Stripe...";
+    }
+
+    // Assurez-vous que l'URL d'appel correspond exactment à votre route de paiement Stripe
+    const res = await fetch('/create-checkout-session', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (res.redirected) {
+      window.location.href = res.url;
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url; // Redirection vers Stripe Checkout
+    } else {
+      alert("Erreur de session de paiement. Vérifiez vos clés Stripe ou logs serveur.");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "Passer la commande";
+      }
+    }
+
+  } catch (err) {
+    console.error("Erreur Stripe :", err);
+    alert("Une erreur technique est survenue.");
+    const btn = document.querySelector('.checkout-btn');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "Passer la commande";
+    }
   }
 };
