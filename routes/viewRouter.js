@@ -8,7 +8,7 @@ const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const Product = require('../models/Product'); 
 const upload = require('../utils/multer');
-const sendEmail = require('../utils/sendEmail'); // 🔥 Importation obligatoire pour l'envoi
+const sendEmail = require('../utils/sendEmail');
 
 const {
    protect,
@@ -111,7 +111,8 @@ router.get('/success', protect, async (req, res) => {
          
          // 1. SÉCURITÉ CONTRE LA CONCURRENCE
          for (const item of cart.items) {
-            const targetId = item.produit || item.productId || item.product;
+            // 🔥 CORRECTION : Ajout de item.productIdNew pour correspondre à vos logs réels
+            const targetId = item.productIdNew || item.produit || item.productId || item.product || item._id;
             let currentProduct = null;
 
             if (targetId) {
@@ -164,7 +165,7 @@ router.get('/success', protect, async (req, res) => {
          });
          console.log("✅ Commande enregistrée avec succès !");
 
-         // 🔥 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
+         // 5. ENVOI DE L'EMAIL HTML AVANT DE VIDER LE PANIER
          const emailTarget = req.user.email;
          if (emailTarget) {
             try {
@@ -215,5 +216,3 @@ router.get('/account/profile', protect, viewController.getProfilePage);
 router.get('/account/password', protect, viewController.getPasswordPage);
 
 router.get('/forgot-password', viewController.getForgotPasswordPage);
-router.get('/reset-password/:token', viewController.getResetPasswordPage);
-
